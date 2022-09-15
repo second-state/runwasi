@@ -5,12 +5,12 @@ use containerd_shim_wasm::services::sandbox_ttrpc::{create_manager, Manager};
 use log::info;
 use runwasi::instance::Wasi as WasiInstance;
 use ttrpc::{self, Server};
-use wasmtime::{Config, Engine};
+use wasmedge_sdk::Vm;
 
 fn main() {
     info!("starting up!");
-    let engine = Engine::new(Config::new().interruptable(true)).unwrap();
-    let s: ManagerService<_, Local<WasiInstance, _>> = ManagerService::new(engine);
+    let vm = Vm::new(None).unwrap();
+    let s: ManagerService<_, Local<WasiInstance, _>> = ManagerService::new(vm);
     let s = Arc::new(Box::new(s) as Box<dyn Manager + Send + Sync>);
     let service = create_manager(s);
 

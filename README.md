@@ -6,6 +6,17 @@ This is a project to facilitate running wasm workloads managed by containerd eit
 It is intended to be a (rust) library that you can take and integrate with your wasm host.
 Included in the repository is a PoC for running a plain wasi host (ie. no extra host functions except to support wasi system calls).
 
+### Build Wasmedge first
+
+```bash
+cd <runwasi_path>/WasmEdge
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DWASMEDGE_BUILD_AOT_RUNTIME=OFF .. && make -j
+
+export WASMEDGE_BUILD_DIR=<runwasi_path>/WasmEdge/build
+export LD_LIBRARY_PATH=$WASMEDGE_BUILD_DIR/lib/api
+```
+
 ### Usage
 
 runwasi is intended to be consumed as a library to be linked to from your own wasm host implementation.
