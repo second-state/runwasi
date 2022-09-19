@@ -15,9 +15,9 @@ build:
 
 .PHONY: install
 install:
-	$(INSTALL) target/$(TARGET)/containerd-shim-wasmtime-v1 $(PREFIX)/bin
-	$(INSTALL) target/$(TARGET)/containerd-shim-wasmtimed-v1 $(PREFIX)/bin
-	$(INSTALL) target/$(TARGET)/containerd-wasmtimed $(PREFIX)/bin
+	$(INSTALL) target/$(TARGET)/containerd-shim-wasmedge-v1 $(PREFIX)/bin
+	$(INSTALL) target/$(TARGET)/containerd-shim-wasmedged-v1 $(PREFIX)/bin
+	$(INSTALL) target/$(TARGET)/containerd-wasmedged $(PREFIX)/bin
 
 # TODO: build this manually instead of requiring buildx
 test/out/img.tar: test/image/Dockerfile test/image/src/main.rs test/image/Cargo.toml test/image/Cargo.lock

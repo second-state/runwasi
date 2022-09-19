@@ -4,7 +4,7 @@ use std::os::unix::io::{IntoRawFd, RawFd};
 use std::path::Path;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread;
 
 use anyhow::Context;
@@ -17,6 +17,7 @@ use wasmedge_sdk::{
     config::{CommonConfigOptions, ConfigBuilder, HostRegistrationConfigOptions},
     params, Vm,
 };
+use wasmedge_sys::AsyncResult;
 
 use super::error::WasmRuntimeError;
 use super::oci_wasmedge;
@@ -24,6 +25,9 @@ use super::oci_wasmedge;
 static mut STDIN_FD: Option<RawFd> = None;
 static mut STDOUT_FD: Option<RawFd> = None;
 static mut STDERR_FD: Option<RawFd> = None;
+lazy_static! {
+    static ref JOB: Arc<RwLock<Option<AsyncResult>>> = Arc::new(RwLock::new(None));
+}
 
 pub struct Wasi {
     exit_code: Arc<(Mutex<Option<(u32, DateTime<Utc>)>>, Condvar)>,
@@ -209,7 +213,15 @@ impl Instance for Wasi {
                 // TODO: How to get exit code?
                 // This was relatively straight forward in go, but wasi and wasmtime are totally separate things in rust.
                 let (lock, cvar) = &*exit_code;
-                let _ret = match vm.run_func(Some("main"), "_start", params!()) {
+
+                let mut job = JOB.write().unwrap();
+                *job = Some(
+                    vm.run_func_async(Some("main"), "_start", params!())
+                        .unwrap(),
+                );
+                drop(job);
+
+                let _ret = match (&*JOB.read().unwrap()).as_ref().unwrap().get_async() {
                     Ok(_) => {
                         debug!("exit code: {}", 0);
                         let mut ec = lock.lock().unwrap();
@@ -249,6 +261,12 @@ impl Instance for Wasi {
                 "only SIGKILL is supported".to_string(),
             ));
         }
+        match &*JOB.read().unwrap() {
+            Some(job) => job.cancel(),
+            None => {
+                // no running wasm task
+            }
+        };
         Ok(())
     }
 
