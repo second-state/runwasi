@@ -13,7 +13,10 @@ use containerd_shim_wasm::sandbox::error::Error;
 use containerd_shim_wasm::sandbox::oci;
 use containerd_shim_wasm::sandbox::{EngineGetter, Instance, InstanceConfig};
 use log::{debug, error};
-use wasmedge_sdk::{params, Vm};
+use wasmedge_sdk::{
+    config::{CommonConfigOptions, ConfigBuilder, HostRegistrationConfigOptions},
+    params, Vm,
+};
 
 use super::error::WasmRuntimeError;
 use super::oci_wasmedge;
@@ -396,7 +399,12 @@ mod wasitest {
 impl EngineGetter for Wasi {
     type E = Vm;
     fn new_engine() -> Result<Vm, Error> {
-        let vm = Vm::new(None).map_err(anyhow::Error::msg)?;
+        let host_options = HostRegistrationConfigOptions::default().wasi(true);
+        let config = ConfigBuilder::new(CommonConfigOptions::default())
+            .with_host_registration_config(host_options)
+            .build()
+            .map_err(anyhow::Error::msg)?;
+        let vm = Vm::new(Some(config)).map_err(anyhow::Error::msg)?;
         Ok(vm)
     }
 }
