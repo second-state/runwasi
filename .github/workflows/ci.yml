@@ -3,13 +3,66 @@ name: CI
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'
   pull_request:
     branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
+  REPO_SLUG: "wasmedge/runwasi"
 
 jobs:
+  hub:
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REPO_SLUG }}
+          ### frontend versioning
+          ### on semver tag:
+          # wasmedge/runwasi:1.2.3
+          # wasmedge/runwasi:1.2
+          # wasmedge/runwasi:1
+          # wasmedge/runwasi:latest
+          ### on pre-release tag:
+          # wasmedge/runwasi:1.1.0-rc.1
+          ### on push default branch (main):
+          # wasmedge/runwasi:main
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=ref,event=branch
+            type=raw,value=latest
+            type=ref,event=pr
+          bake-target: meta-helper
+          flavor: |
+            latest=false
+      - name: Login to DockerHub
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      - name: Build and push
+        uses: docker/bake-action@v2
+        with:
+          files: |
+            ./docker-bake.hcl
+            ${{ steps.meta.outputs.bake-file }}
+          targets: image-cross
+          push: ${{ github.event_name != 'pull_request' }}
+
   build:
     runs-on: ubuntu-latest
 
