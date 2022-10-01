@@ -1010,9 +1010,11 @@ where
 
                 let timestamp = new_timestamp().unwrap();
                 let event = TaskExit {
-                    container_id: id,
+                    container_id: id.clone(),
                     exit_status: ec.0,
                     exited_at: SingularPtrField::some(timestamp),
+                    pid: pid,
+                    id: id,
                     ..Default::default()
                 };
 
