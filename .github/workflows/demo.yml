@@ -1,0 +1,92 @@
+name: examples
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'info'
+  pull_request:
+    branches: [main]
+
+jobs:
+  run-all-examples:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Install apt-get packages
+      run: |
+        sudo ACCEPT_EULA=Y apt-get update
+        sudo ACCEPT_EULA=Y apt-get upgrade
+        sudo apt-get install wget git curl software-properties-common build-essential
+
+    - name: Install and run MySQL
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install mysql-server libmysqlclient-dev curl
+        sudo service mysql start
+        mysql -e "PURGE BINARY LOGS BEFORE now();" -uroot -proot
+
+    - name: Install WasmEdge
+      run: |
+        curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | sudo bash -s
+
+    - name: Build and install conatiner wasmedge shim
+      run: |
+        rustup default nightly
+        make build
+        sudo make install
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build all test and demo OCI images
+      run: |
+        make load
+        make load_demo
+
+    - name: Run basic test case
+      run: |
+        sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'
+
+    - name: Run hype demo conatiner
+      run: |
+        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testclient /client.wasm
+        nohup sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testserver /server.wasm &
+
+    - name: Test hyper server
+      run: |
+        curl http://localhost:8080/echo -X POST -d "WasmEdge"
+        ps aux | grep -i containerd-shim-wasm | grep -v grep | awk {'print $2'} | xargs sudo kill -9
+        # sudo ctr task kill -s SIGKILL testserver
+
+    - name: Run reqwest demo conatiner
+      run: |
+        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/reqwest-demo:latest testreqwest
+
+    - name: Run db demo conatiner
+      run: |
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /insert.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /query.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /crud.wasm
+
+    - name: Run microservice with database demo conatiner
+      run: |
+        nohup sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/microservice-db-demo:latest testmicroservice &
+
+    - name: Test microservice
+      run: |
+        curl http://localhost:8080/init
+        curl http://localhost:8080/create_orders -X POST -d @demo/microservice-rust-mysql/orders.json
+        curl http://localhost:8080/orders
+        curl http://localhost:8080/update_order -X POST -d @demo/microservice-rust-mysql/update_order.json
+        curl http://localhost:8080/delete_order?id=2
+        ps aux | grep -i containerd-shim-wasm | grep -v grep | awk {'print $2'} | xargs sudo kill -9
+        # sudo ctr task kill -s SIGKILL testmicroservice

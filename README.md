@@ -127,6 +127,9 @@ You will need to make sure the containerd-wasmedged daemon has already been star
 
 #### Test and demo with containerd
 
+**Attention**
+
+Instead of docker-desktop official release feature `use containerd for pulling and storing images` enable, below operations we talk is build a local image and interact with the container base on image we built.
 
 - **Install WasmEdge first**
 
@@ -151,7 +154,7 @@ test instance::wasitest::test_delete_after_create ... ok
 test instance::wasitest::test_wasi ... ok
 ```
 
-- **Build and install components**
+- **Build and install shim components**
 
 ```terminal
 $ make build
@@ -162,7 +165,18 @@ $ sudo make install
 - **Demo**
 
 Now you can use the test image provided in this repo to have test with, use `make load` to load it into containerd ([buildx](https://docs.docker.com/build/buildx/install/) is required).
-Run it with `ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm`.
+
+- Case 1.
+
+Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'`. You should see some output repeated like:
+```terminal
+hello
+exiting
+```
+
+- Case 2.
+
+Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm`.
 You should see some output repeated like:
 
 ```terminal
@@ -179,4 +193,4 @@ So they'll continue singing it forever just because...
 (...)
 ```
 
-To kill the process from the demo, you can run in other session: `ctr task kill -s SIGKILL testwasm`. And the test binary supports some other commands, see test/image/src/main.rs to play around more.
+To kill the process from the case 2. demo, you can run in other session: `ctr task kill -s SIGKILL testwasm`. And the test binary supports full commands, check test/image/src/main.rs to play around more.
