@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "containerd-shim-wasmtime-demo"
+name = "containerd-shim-wasmedge-demo"
 version = "0.1.0"

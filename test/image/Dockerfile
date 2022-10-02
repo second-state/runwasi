@@ -6,4 +6,4 @@ RUN cargo build --target=wasm32-wasi --release
 
 FROM scratch
 ENTRYPOINT ["/wasm"]
-COPY --from=build /opt/wasmtest/target/wasm32-wasi/release/containerd-shim-wasmtime-demo.wasm /wasm
+COPY --from=build /opt/wasmtest/target/wasm32-wasi/release/containerd-shim-wasmedge-demo.wasm /wasm

@@ -6,17 +6,6 @@ This is a project to facilitate running wasm workloads managed by containerd eit
 It is intended to be a (rust) library that you can take and integrate with your wasm host.
 Included in the repository is a PoC for running a plain wasi host (ie. no extra host functions except to support wasi system calls).
 
-### Build Wasmedge first
-
-```bash
-cd <runwasi_path>/WasmEdge
-mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DWASMEDGE_BUILD_AOT_RUNTIME=OFF .. && make -j
-
-export WASMEDGE_BUILD_DIR=<runwasi_path>/WasmEdge/build
-export LD_LIBRARY_PATH=$WASMEDGE_BUILD_DIR/lib/api
-```
-
 ### Usage
 
 runwasi is intended to be consumed as a library to be linked to from your own wasm host implementation.
@@ -62,7 +51,7 @@ fn main() {
 }
 ```
 
-Note you can implement your own ShimCli if you like and customize your wasmtime engine and other things.
+Note you can implement your own ShimCli if you like and customize your wasm engine and other things.
 I encourage you to checkout how that is implemented.
 
 The shim binary just needs to be installed into `$PATH` (as seen by the containerd process) with a binary name like `containerd-shim-myshim-v1`.
@@ -74,7 +63,7 @@ use containerd_shim_wasm::sandbox::{Local, ManagerService, Instance};
 use containerd_shim_wasm::services::sandbox_ttrpc::{create_manager, Manager};
 use std::sync::Arc;
 use ttrpc::{self, Server};
-use wasmtime::{Config, Engine};
+/// ...
 
 struct MyInstance {
     /// ...
@@ -91,7 +80,7 @@ fn main() {
     let service = create_manager(s);
 
     let mut server = Server::new()
-        .bind("unix:///run/io.containerd.wasmtime.v1/manager.sock")
+        .bind("unix:///run/io.containerd.myshim.v1/manager.sock")
         .unwrap()
         .register_service(service);
 
@@ -102,53 +91,92 @@ fn main() {
 ```
 
 This will be the host daemon that you startup and manage on your own.
-You can use the provided `containerd-shim-wasmtimed-v1` binary as the shim to specify in containerd.
+You can use the provided `containerd-shim-myshim-v1` binary as the shim to specify in containerd.
 
 Shared mode requires precise control over real threads and as such should not be used with an async runtime.
 
 ### Examples
-#### containerd-shim-wasmtime-v1
 
-This is a containerd shim which runs wasm workloads in wasmtime.
-You can use it with containerd's `ctr` by specifying `--runtime=io.containerd.wasmtime.v1` when creating the container.
-The shim binary must be in $PATH (that is the $PATH that containerd sees).
+#### Components
 
-You can use the test image provided in this repo to have test with, use `make load` to load it into containerd.
-Run it with `ctr run --rm --runtime=io.containerd.wasmtime.v1 docker.io/library/wasmtest:latest testwasm`.
-You should see some output like:
-```
-Hello from wasm!
-```
+- **containerd-shim-wasmedge-v1**
 
-The test binary supports some other commands, see test/image/wasm.go to play around more.
+This is a containerd shim which runs wasm workloads in [WasmEdge](https://github.com/WasmEdge/WasmEdge).
+You can use it with containerd's `ctr` by specifying `--runtime=io.containerd.wasmedge.v1` when creating the container.
+And make sure the shim binary must be in $PATH (that is the $PATH that containerd sees). Usually you just run `make install` after `make build`.
 
 This shim runs one per pod.
 
-#### containerd-shim-wasmtimed-v1
+- **containerd-shim-wasmedged-v1**
 
-A cli used to connect containerd to the `containerd-wasmtimed` sandbox daemon.
-When containerd requests for a container to be created, it fires up this shim binary which will connect to the `containerd-wasmtimed` service running on the host.
+A cli used to connect containerd to the `containerd-wasmedged` sandbox daemon.
+When containerd requests for a container to be created, it fires up this shim binary which will connect to the `containerd-wasmedged` service running on the host.
 The service will return a path to a unix socket which this shim binary will write back to containerd which containerd will use to connect to for shim requests.
-This binary does not serve requests, it is only responsible for sending requests to the `contianerd-wasmtimed` daemon to create or destroy sandboxes.
-#### containerd-wasmtimed
+This binary does not serve requests, it is only responsible for sending requests to the `contianerd-wasmedged` daemon to create or destroy sandboxes.
+
+- **containerd-wasmedged**
 
 This is a sandbox manager that enables running 1 wasm host for the entire node instead of one per pod (or container).
 When a container is created, a request is sent to this service to create a sandbox.
 The "sandbox" is a containerd task service that runs in a new thread on its own unix socket, which we return back to containerd to connect to.
 
-The wasmtime engine is shared between all sandboxes in the service.
+The WasmEdge engine is shared between all sandboxes in the service.
 
-To use this shim, specify `io.containerd.wasmtimed.v1` as the runtime to use.
-You will need to make sure the containerd-wasmtimed daemon has already been started.
+To use this shim, specify `io.containerd.wasmedged.v1` as the runtime to use.
+You will need to make sure the containerd-wasmedged daemon has already been started.
 
-#### Build
+#### Test and demo with containerd
+
+
+- **Install WasmEdge first**
+
+Install it and make sure the library is in the search path.
+
+```terminal
+$ curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
+$ sudo -E sh -c 'echo "$HOME/.wasmedge/lib" > /etc/ld.so.conf.d/libwasmedge.conf'
+$ sudo ldconfig
+```
+
+- **Self test**
+
+```terminal
+$ cargo test -- --nocapture
+```
+You should see some output like:
+```terminal
+running 3 tests
+test instance::tests::test_maybe_open_stdio ... ok
+test instance::wasitest::test_delete_after_create ... ok
+test instance::wasitest::test_wasi ... ok
+```
+
+- **Build and install components**
 
 ```terminal
 $ make build
-```
-
-#### Install
-
-```terminal
 $ sudo make install
 ```
+
+
+- **Demo**
+
+Now you can use the test image provided in this repo to have test with, use `make load` to load it into containerd ([buildx](https://docs.docker.com/build/buildx/install/) is required).
+Run it with `ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm`.
+You should see some output repeated like:
+
+```terminal
+This is a song that never ends.
+Yes, it goes on and on my friends.
+Some people started singing it not knowing what it was,
+So they'll continue singing it forever just because...
+
+This is a song that never ends.
+Yes, it goes on and on my friends.
+Some people started singing it not knowing what it was,
+So they'll continue singing it forever just because...
+
+(...)
+```
+
+To kill the process from the demo, you can run in other session: `ctr task kill -s SIGKILL testwasm`. And the test binary supports some other commands, see test/image/src/main.rs to play around more.
