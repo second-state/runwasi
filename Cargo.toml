@@ -8,15 +8,12 @@ containerd-shim = "0.3.0"
 containerd-shim-wasm = { path = "crates/containerd-shim-wasm" }
 log = "0.4"
 ttrpc = "0.6"
-wasmtime = "^0.35"
-wasmtime-wasi = "^0.35"
-wasi-common = "^0.35"
 # wasmedge-sys = "0.9.0"
 # wasmedge-sdk = "0.4.0"
 # wasmedge-types = "0.2.1"
-wasmedge-sys = { path = "./WasmEdge/bindings/rust/wasmedge-sys" }
-wasmedge-sdk = { path = "./WasmEdge/bindings/rust/wasmedge-sdk" }
-wasmedge-types = { path = "./WasmEdge/bindings/rust/wasmedge-types" }
+wasmedge-sys = { git = "https://github.com/WasmEdge/WasmEdge.git" }
+wasmedge-sdk = { git = "https://github.com/WasmEdge/WasmEdge.git" }
+wasmedge-types = { git = "https://github.com/WasmEdge/WasmEdge.git" }
 chrono = "0.4.19"
 anyhow = "1.0"
 cap-std = "0.24.1"

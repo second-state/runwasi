@@ -13,6 +13,4 @@ pub enum WasmRuntimeError {
     AnyError(#[from] anyhow::Error),
     #[error("{0}")]
     Wasmedge(#[from] Box<wasmedge_types::error::WasmEdgeError>),
-    #[error("{0}")]
-    WasiCommonStringArray(#[from] wasi_common::StringArrayError),
 }

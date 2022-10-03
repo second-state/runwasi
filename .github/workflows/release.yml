@@ -52,23 +52,23 @@ jobs:
       - name: package release assets
         run: |
           mkdir _dist
-          cp target/release/containerd-shim-wasmtime-v1 _dist/
+          cp target/release/containerd-shim-wasmedge-v1 _dist/
           cd _dist
-          tar czf containerd-shim-wasmtime-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz containerd-shim-wasmtime-v1
+          tar czf containerd-shim-wasmedge-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz containerd-shim-wasmedge-v1
       - name: upload binary as GitHub artifact
         uses: actions/upload-artifact@v3
         with:
-          name: containerd-shim-wasmtime-v1
-          path: _dist/containerd-shim-wasmtime-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz
+          name: containerd-shim-wasmedge-v1
+          path: _dist/containerd-shim-wasmedge-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz
       - name: upload binary to GitHub release
         uses: svenstaro/upload-release-action@2.2.1
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: _dist/containerd-shim-wasmtime-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz
-          asset_name: containerd-shim-wasmtime-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz
+          file: _dist/containerd-shim-wasmedge-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz
+          asset_name: containerd-shim-wasmedge-v1-${{ env.RELEASE_VERSION }}-${{ env.RUNNER_OS }}-amd64.tar.gz
           overwrite: true
           prerelease: true
           tag: ${{ github.ref }}
           body: |
-            Release of containerd-shim-wasmtime-v1:${{ env.RELEASE_VERSION }} for amd64
+            Release of containerd-shim-wasmedge-v1:${{ env.RELEASE_VERSION }} for amd64
 
