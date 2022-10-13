@@ -68,8 +68,7 @@ jobs:
     - name: Test hyper server
       run: |
         curl http://localhost:8080/echo -X POST -d "WasmEdge"
-        ps aux | grep -i containerd-shim-wasm | grep -v grep | awk {'print $2'} | xargs sudo kill -9
-        # sudo ctr task kill -s SIGKILL testserver
+        sudo ctr task kill -s SIGKILL testserver
 
     - name: Run reqwest demo conatiner
       run: |
@@ -92,5 +91,4 @@ jobs:
         curl http://localhost:8080/orders
         curl http://localhost:8080/update_order -X POST -d @demo/microservice-rust-mysql/update_order.json
         curl http://localhost:8080/delete_order?id=2
-        ps aux | grep -i containerd-shim-wasm | grep -v grep | awk {'print $2'} | xargs sudo kill -9
-        # sudo ctr task kill -s SIGKILL testmicroservice
+        sudo ctr task kill -s SIGKILL testmicroservice

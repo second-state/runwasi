@@ -2,14 +2,6 @@
 
 All below demo cases should be run after all shim components already installed that mentioned in [README.md](../README.md#examples). 
 
-**Known Issue**
-
-Currently some demo cases run with tokio couldn't be killed by `sudo ctr task kill -s SIGKILL <container name>`. User could exit by kill shim process directly instead. For example: 
-```terminal
-$ ps aux | grep -i containerd-shim-wasm | grep -v grep | awk {'print $2'} | xargs sudo kill -9
-```
-
-
 ## Build and load all demo images first
 
 - Run
@@ -94,6 +86,11 @@ $ curl http://127.0.0.1:8080/echo -X POST -d "WasmEdge"
 - Output
 ```terminal
 WasmEdge%
+```
+
+- Kill the running task in container
+```terminal
+$ sudo ctr task kill -s SIGKILL testserver
 ```
 
 ## [Demo 2. Reqwest](https://github.com/WasmEdge/wasmedge_reqwest_demo)
@@ -424,4 +421,9 @@ $ curl http://localhost:8080/delete_order?id=2
 - Output
 ```terminal
 {"status":true}%
+```
+
+- Kill the running task in container
+```terminal
+$ sudo ctr task kill -s SIGKILL testmicroservice
 ```

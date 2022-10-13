@@ -262,7 +262,14 @@ impl Instance for Wasi {
             ));
         }
         match &*JOB.read().unwrap() {
-            Some(job) => job.cancel(),
+            Some(job) => {
+                job.cancel();
+                let code = self.exit_code.clone();
+                let (lock, cvar) = &*code;
+                let mut ec = lock.lock().unwrap();
+                *ec = Some((137, Utc::now()));
+                cvar.notify_one();
+            },
             None => {
                 // no running wasm task
             }
@@ -283,7 +290,12 @@ impl Instance for Wasi {
                 exit = cvar.wait(exit).unwrap();
             }
             let ec = (*exit).unwrap();
-            channel.send(ec).unwrap();
+            match channel.send(ec) {
+                Ok(_) => {},
+                Err(error) => {
+                    error!("channel disconnect: {}", error);
+                }
+            }
         });
 
         Ok(())
