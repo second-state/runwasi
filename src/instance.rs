@@ -256,11 +256,6 @@ impl Instance for Wasi {
     }
 
     fn kill(&self, signal: u32) -> Result<(), Error> {
-        if signal != 9 {
-            return Err(Error::InvalidArgument(
-                "only SIGKILL is supported".to_string(),
-            ));
-        }
         match &*JOB.read().unwrap() {
             Some(job) => {
                 job.cancel();
