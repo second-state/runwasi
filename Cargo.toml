@@ -40,3 +40,4 @@ path = "src/bin/containerd-wasmedged/main.rs"
 
 [profile.release]
 panic = "abort"
+strip = true

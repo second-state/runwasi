@@ -255,7 +255,7 @@ impl Instance for Wasi {
         Ok(1) // TODO: PID: I wanted to use a thread ID here, but threads use a u64, the API wants a u32
     }
 
-    fn kill(&self, signal: u32) -> Result<(), Error> {
+    fn kill(&self, _signal: u32) -> Result<(), Error> {
         match &*JOB.read().unwrap() {
             Some(job) => {
                 job.cancel();
