@@ -191,7 +191,7 @@ impl Instance for Wasi {
         let stdout = self.stdout.clone();
         let stderr = self.stderr.clone();
 
-        let _ = thread::Builder::new()
+        let handle = thread::Builder::new()
             .name(self.id.clone())
             .spawn(move || {
                 debug!("starting instance");
@@ -252,7 +252,8 @@ impl Instance for Wasi {
             }
         }
 
-        Ok(1) // TODO: PID: I wanted to use a thread ID here, but threads use a u64, the API wants a u32
+        let pid = handle.thread().id().as_u64().get();
+        Ok(pid as u32) // TODO: PID: I wanted to use a thread ID here, but threads use a u64, the API wants a u32
     }
 
     fn kill(&self, signal: u32) -> Result<(), Error> {
