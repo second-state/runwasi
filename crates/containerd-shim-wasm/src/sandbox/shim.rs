@@ -815,7 +815,7 @@ where
                         ..Default::default()
                     });
                     return Ok(api::CreateTaskResponse {
-                        pid: std::process::id(), // TODO: PID
+                        pid: std::process::id(),
                         ..Default::default()
                     });
                 }
@@ -1013,8 +1013,8 @@ where
                     container_id: id.clone(),
                     exit_status: ec.0,
                     exited_at: SingularPtrField::some(timestamp),
-                    pid: pid,
-                    id: id,
+                    pid,
+                    id,
                     ..Default::default()
                 };
 
