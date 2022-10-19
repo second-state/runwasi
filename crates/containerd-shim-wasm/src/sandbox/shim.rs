@@ -1303,15 +1303,7 @@ where
             shim::Error::InvalidArgument(format!("error loading runtime spec: {}", err))
         })?;
 
-        let default = HashMap::new() as HashMap<String, String>;
-        let annotations = spec.annotations().as_ref().unwrap_or(&default);
-
-        let id = opts.id.clone();
-
-        let grouping = annotations
-            .get("io.kubernetes.cri.sandbox-id")
-            .unwrap_or(&id)
-            .to_string();
+        let grouping = opts.id.clone();
 
         let envs = vec![] as Vec<(&str, &str)>;
 
@@ -1336,8 +1328,10 @@ where
                     setns(f.as_raw_fd(), CloneFlags::CLONE_NEWNET).map_err(|err| {
                         ShimError::Other(format!("could not set network namespace: {0}", err))
                     })?;
+
                     break;
                 }
+
                 unshare(CloneFlags::CLONE_NEWNET).map_err(|err| {
                     ShimError::Other(format!("could not unshare network namespace: {0}", err))
                 })?;
