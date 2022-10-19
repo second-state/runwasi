@@ -252,7 +252,7 @@ impl Instance for Wasi {
             }
         }
 
-        Ok(1) // TODO: PID: I wanted to use a thread ID here, but threads use a u64, the API wants a u32
+        Ok(std::process::id())
     }
 
     fn kill(&self, signal: u32) -> Result<(), Error> {
