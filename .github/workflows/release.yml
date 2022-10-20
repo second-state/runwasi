@@ -39,16 +39,17 @@ jobs:
         run: |
           OS=$(echo "${{ runner.os }}" | tr '[:upper:]' '[:lower:]')
           echo "RUNNER_OS=$OS" >> $GITHUB_ENV
-      - name: Install latest Rust stable toolchain
+      - name: Setup WasmEdge build env
+        run: |
+          curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash
+          echo "LD_LIBRARY_PATH=$HOME/.wasmedge/lib" >> $GITHUB_ENV
+      - name: Install nightly Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           default: true
-      - name: build release
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release
+      - name: Build release
+        run: cargo build --verbose --release
       - name: package release assets
         run: |
           mkdir _dist
@@ -71,4 +72,3 @@ jobs:
           tag: ${{ github.ref }}
           body: |
             Release of containerd-shim-wasmedge-v1:${{ env.RELEASE_VERSION }} for amd64
-
