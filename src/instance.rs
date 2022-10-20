@@ -1,11 +1,15 @@
 use libc::{dup, dup2, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
+use std::collections::HashMap;
+use std::io::ErrorKind;
+use std::io::Write;
 use std::fs::OpenOptions;
 use std::os::unix::io::{IntoRawFd, RawFd};
+use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, Condvar, Mutex, RwLock};
-use std::thread;
+use std::{process, thread};
 
 use anyhow::Context;
 use chrono::{DateTime, Utc};
@@ -13,6 +17,7 @@ use containerd_shim_wasm::sandbox::error::Error;
 use containerd_shim_wasm::sandbox::oci;
 use containerd_shim_wasm::sandbox::{EngineGetter, Instance, InstanceConfig};
 use log::{debug, error};
+use nix::{sys::signal, unistd::Pid};
 use wasmedge_sdk::{
     config::{CommonConfigOptions, ConfigBuilder, HostRegistrationConfigOptions},
     params, Vm,
@@ -167,6 +172,20 @@ pub fn prepare_module(
     Ok(vm)
 }
 
+fn parse_env(envs: &[String]) -> HashMap<String, String> {
+    // make NAME=VALUE to HashMap<NAME, VALUE>.
+    envs.iter()
+        .filter_map(|e| {
+            let mut split = e.split('=');
+
+            split.next().map(|key| {
+                let value = split.collect::<Vec<&str>>().join("=");
+                (key.into(), value)
+            })
+        })
+        .collect()
+}
+
 impl Instance for Wasi {
     type E = Vm;
     fn new(id: String, cfg: Option<&InstanceConfig<Self::E>>) -> Self {
@@ -182,11 +201,74 @@ impl Instance for Wasi {
         }
     }
     fn start(&self) -> Result<u32, Error> {
+        // Call prehook before the start
+        let bundle = self.bundle.clone();
+        let spec = oci::load(Path::new(&bundle).join("config.json").to_str().unwrap())?;
+        match spec.hooks().as_ref() {
+            None => {
+                log::debug!("no hooks found")
+            }
+            Some(hooks) => {
+                let prestart_hooks = hooks.prestart().as_ref().unwrap();
+
+                for hook in prestart_hooks {
+                    let mut hook_command = process::Command::new(&hook.path());
+                    // Based on OCI spec, the first argument of the args vector is the
+                    // arg0, which can be different from the path.  For example, path
+                    // may be "/usr/bin/true" and arg0 is set to "true". However, rust
+                    // command differenciates arg0 from args, where rust command arg
+                    // doesn't include arg0. So we have to make the split arg0 from the
+                    // rest of args.
+                    if let Some((arg0, args)) = hook.args().as_ref().and_then(|a| a.split_first()) {
+                        log::debug!("run_hooks arg0: {:?}, args: {:?}", arg0, args);
+                        hook_command.arg0(arg0).args(args)
+                    } else {
+                        hook_command.arg0(&hook.path().display().to_string())
+                    };
+
+                    let envs: HashMap<String, String> = if let Some(env) = hook.env() {
+                        parse_env(env)
+                    } else {
+                        HashMap::new()
+                    };
+                    log::debug!("run_hooks envs: {:?}", envs);
+
+                    let mut hook_process = hook_command
+                        .env_clear()
+                        .envs(envs)
+                        .stdin(process::Stdio::piped())
+                        .spawn()
+                        .with_context(|| "Failed to execute hook")?;
+                    let hook_process_pid = Pid::from_raw(hook_process.id() as i32);
+
+                    if let Some(stdin) = &mut hook_process.stdin {
+                        // We want to ignore BrokenPipe here. A BrokenPipe indicates
+                        // either the hook is crashed/errored or it ran successfully.
+                        // Either way, this is an indication that the hook command
+                        // finished execution.  If the hook command was successful,
+                        // which we will check later in this function, we should not
+                        // fail this step here. We still want to check for all the other
+                        // error, in the case that the hook command is waiting for us to
+                        // write to stdin.
+                        let state = format!("{{ \"pid\": {} }}", std::process::id());
+                        if let Err(e) = stdin.write_all(state.as_bytes()) {
+                            if e.kind() != ErrorKind::BrokenPipe {
+                                // Not a broken pipe. The hook command may be waiting
+                                // for us.
+                                let _ = signal::kill(hook_process_pid, signal::Signal::SIGKILL);
+                            }
+                        }
+                    }
+
+                    hook_process.wait()?;
+                }
+            }
+        }
+
         let engine = self.engine.clone();
 
         let exit_code = self.exit_code.clone();
         let (tx, rx) = channel::<Result<(), Error>>();
-        let bundle = self.bundle.clone();
         let stdin = self.stdin.clone();
         let stdout = self.stdout.clone();
         let stderr = self.stderr.clone();
@@ -252,10 +334,10 @@ impl Instance for Wasi {
             }
         }
 
-        Ok(1) // TODO: PID: I wanted to use a thread ID here, but threads use a u64, the API wants a u32
+        Ok(std::process::id())
     }
 
-    fn kill(&self, signal: u32) -> Result<(), Error> {
+    fn kill(&self, _signal: u32) -> Result<(), Error> {
         match &*JOB.read().unwrap() {
             Some(job) => {
                 job.cancel();
@@ -264,7 +346,7 @@ impl Instance for Wasi {
                 let mut ec = lock.lock().unwrap();
                 *ec = Some((137, Utc::now()));
                 cvar.notify_one();
-            },
+            }
             None => {
                 // no running wasm task
             }
@@ -286,7 +368,7 @@ impl Instance for Wasi {
             }
             let ec = (*exit).unwrap();
             match channel.send(ec) {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(error) => {
                     error!("channel disconnect: {}", error);
                 }
