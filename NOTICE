@@ -1,0 +1,14 @@
+Second State Containerd shim of Wasmedge
+Copyright 2022 The Second State
+
+This product includes software developed at
+The Second State (https://github.com/second-state/runwasi).
+
+The Initial Developer of major parts of the framework, which are
+fork from Deis Labs (https://github.com/deislabs).
+Copyright 2022 Deis Labs. All Rights Reserved.
+
+The Initial Developer of some parts of the file
+crates/containerd-shim-wasm/src/sandbox/shim.rs, which are copied from,
+derived from, or inspired by Youki (https://github.com/containers/youki)
+Copyright 2021 - 2022 Youki. All Rights Reserved.
