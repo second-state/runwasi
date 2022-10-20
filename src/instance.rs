@@ -251,9 +251,7 @@ impl Instance for Wasi {
                         // error, in the case that the hook command is waiting for us to
                         // write to stdin.
                         let state = format!("{{ \"pid\": {} }}", std::process::id());
-                        let encoded_state =
-                            serde_json::to_string(&state).context("failed to encode container state")?;
-                        if let Err(e) = stdin.write_all(encoded_state.as_bytes()) {
+                        if let Err(e) = stdin.write_all(state.as_bytes()) {
                             if e.kind() != ErrorKind::BrokenPipe {
                                 // Not a broken pipe. The hook command may be waiting
                                 // for us.
