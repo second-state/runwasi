@@ -32,6 +32,24 @@ pub fn get_root(spec: &Spec) -> &PathBuf {
     root.path()
 }
 
+pub fn get_wasm_mounts(spec: &Spec) -> Vec<&str> {
+    let mounts: Vec<&str> = match spec.mounts() {
+        Some(mounts) => mounts
+            .iter()
+            .filter_map(|mount| {
+                if let Some(typ) = mount.typ() {
+                    if typ == "bind" || typ == "tmppfs" {
+                        return mount.destination().to_str();
+                    }
+                }
+                None
+            })
+            .collect(),
+        _ => vec![],
+    };
+    return mounts;
+}
+
 pub fn get_args(spec: &Spec) -> &[String] {
     let p = match spec.process() {
         None => return &[],
