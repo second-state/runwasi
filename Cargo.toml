@@ -24,6 +24,9 @@ nix = "0.23"
 [dev-dependencies]
 tempfile = "3.0"
 
+[features]
+wasi_nn = ["wasmedge-sys/wasi_nn", "wasmedge-sdk/wasi_nn"]
+
 [workspace]
 members = ["crates/containerd-shim-wasm"]
 

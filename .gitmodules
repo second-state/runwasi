@@ -1,12 +1,15 @@
-[submodule "demo/wasmedge_hyper_demo"]
-	path = demo/wasmedge_hyper_demo
+[submodule "demo/hyper"]
+	path = demo/hyper
 	url = https://github.com/WasmEdge/wasmedge_hyper_demo.git
-[submodule "demo/wasmedge_reqwest_demo"]
-	path = demo/wasmedge_reqwest_demo
+[submodule "demo/reqwest"]
+	path = demo/reqwest
 	url = https://github.com/WasmEdge/wasmedge_reqwest_demo.git
-[submodule "demo/wasmedge-db-examples"]
-	path = demo/wasmedge-db-examples
+[submodule "demo/db"]
+	path = demo/db
 	url = https://github.com/WasmEdge/wasmedge-db-examples.git
-[submodule "demo/microservice-rust-mysql"]
-	path = demo/microservice-rust-mysql
+[submodule "demo/microservice_db"]
+	path = demo/microservice_db
 	url = https://github.com/second-state/microservice-rust-mysql.git
+[submodule "demo/wasinn"]
+	path = demo/wasinn
+	url = https://github.com/second-state/WasmEdge-WASINN-examples.git

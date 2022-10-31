@@ -12,7 +12,7 @@ on:
         required: true
         default: 'info'
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     branches: [main]
   schedule:
@@ -91,8 +91,39 @@ jobs:
     - name: Test microservice
       run: |
         curl http://localhost:8080/init
-        curl http://localhost:8080/create_orders -X POST -d @demo/microservice-rust-mysql/orders.json
+        curl http://localhost:8080/create_orders -X POST -d @demo/microservice_db/orders.json
         curl http://localhost:8080/orders
-        curl http://localhost:8080/update_order -X POST -d @demo/microservice-rust-mysql/update_order.json
+        curl http://localhost:8080/update_order -X POST -d @demo/microservice_db/update_order.json
         curl http://localhost:8080/delete_order?id=2
         sudo ctr task kill -s SIGKILL testmicroservice
+
+    - name: Download PyTorch library, Wasmedge Library and WASINN PyTorch plugin
+      run: |
+        ./demo/utils/setup_wasinn_plugin.sh
+        echo "WASMEDGE_INCLUDE_DIR=$PWD/WasmEdge-0.11.1-Linux/include" >> $GITHUB_ENV
+        echo "WASMEDGE_LIB_DIR=$PWD/WasmEdge-0.11.1-Linux/lib" >> $GITHUB_ENV
+        echo "WASMEDGE_PLUGIN_PATH=$PWD/WasmEdge-0.11.1-Linux/lib/wasmedge" >> $GITHUB_ENV
+
+    - name: Build and install conatiner wasmedge shim with support wasi-nn plugin
+      run: |
+        make build FEATURES=wasi_nn
+        sudo make install
+
+    - name: Add WASMEDGE_PLUGIN_PATH into service containerd
+      shell: 'script -q -e -c "bash {0}"'
+      run: |
+        sudo SYSTEMD_EDITOR=tee systemctl edit containerd <<EOF
+        [Service]
+        Environment="WASMEDGE_PLUGIN_PATH=$WASMEDGE_PLUGIN_PATH"
+        EOF
+        sudo systemctl restart containerd
+
+    - name: Run WASI-NN PyTorch demo conatiner
+      run: |
+        wget --no-clobber https://github.com/bytecodealliance/wasi-nn/raw/main/rust/examples/images/1.jpg -O demo/wasinn/pytorch-mobilenet-image/input.jpg
+        sudo ctr run --rm \
+          --mount type=bind,src=$PWD/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro \
+          --runtime=io.containerd.wasmedge.v1 \
+          docker.io/library/wasinn-demo:latest \
+          testwasinn \
+          /wasm /resource/mobilenet.pt /resource/input.jpg

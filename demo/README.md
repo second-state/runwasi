@@ -1,5 +1,12 @@
 # Demo
 
+## Index
+- [Hyper Cleint / Server](https://github.com/CaptainVincent/runwasi/tree/main/demo#demo-1-hyper-cleint--server)
+- [Reqwest](https://github.com/CaptainVincent/runwasi/tree/main/demo#demo-2-reqwest)
+- [Database](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-3-database)
+- [Microservice with Database](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-4-microservice-with-database)
+- [WASI NN](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-5-wasi-nn-x86-only)
+
 All below demo cases should be run after all shim components already installed that mentioned in [README.md](../README.md#examples). 
 
 ## Build and load all demo images first
@@ -426,4 +433,59 @@ $ curl http://localhost:8080/delete_order?id=2
 - Kill the running task in container
 ```terminal
 $ sudo ctr task kill -s SIGKILL testmicroservice
+```
+
+## [Case 5. WASI NN (x86 only)](https://github.com/second-state/WasmEdge-WASINN-examples)
+
+### Setup tools
+
+- Run setup_wasinn_plugin.sh script to download PyTorch library, Wasmedge Library and WASINN PyTorch plugin. After that update library search path to system.
+
+> **Attention**
+Here will overwrite your libwasmedge search path
+
+```terminal
+$ ./demo/utils/setup_wasinn_plugin.sh
+```
+
+- Add we also need set environment WASMEDGE_PLUGIN_PATH for containerd service
+
+Paste below content after run `sudo EDITOR=vim systemctl edit containerd`, replace `<Your Plugin Install Path>` to env `$WASMEDGE_PLUGIN_PATH` (was set by setup_wasinn_plugin.sh)
+```terminal
+[Service]
+Environment="WASMEDGE_PLUGIN_PATH=<Your Plugin Install Path>"
+```
+
+- Build and install wasmedge shim with support wasi-nn plugin
+```terminal
+$ make build FEATURES=wasi_nn
+$ sudo make install
+```
+
+- Download test image
+```terminal
+wget --no-clobber https://github.com/bytecodealliance/wasi-nn/raw/main/rust/examples/images/1.jpg -O demo/wasinn/pytorch-mobilenet-image/input.jpg
+```
+
+Congratulations!! We done.
+
+### Execution
+
+- Run
+```terminal
+sudo ctr run --rm --mount type=bind,src=$(pwd)/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro --runtime=io.containerd.wasmedge.v1 docker.io/library/wasinn-demo:latest testwasinn /wasm /resource/mobilenet.pt /resource/input.jpg
+```
+
+- Output
+```terminal
+Read torchscript binaries, size in bytes: 14376860
+Loaded graph into wasi-nn with ID: 0
+Created wasi-nn execution context with ID: 0
+Read input tensor, size in bytes: 602112
+Executed graph inference
+   1.) [954](20.6681)banana
+   2.) [940](12.1483)spaghetti squash
+   3.) [951](11.5748)lemon
+   4.) [950](10.4899)orange
+   5.) [953](9.4834)pineapple, ananas
 ```

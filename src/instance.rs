@@ -1,8 +1,8 @@
 use libc::{dup, dup2, STDERR_FILENO, STDIN_FILENO, STDOUT_FILENO};
 use std::collections::HashMap;
+use std::fs::OpenOptions;
 use std::io::ErrorKind;
 use std::io::Write;
-use std::fs::OpenOptions;
 use std::os::unix::io::{IntoRawFd, RawFd};
 use std::os::unix::process::CommandExt;
 use std::path::Path;
@@ -22,7 +22,7 @@ use wasmedge_sdk::{
     config::{CommonConfigOptions, ConfigBuilder, HostRegistrationConfigOptions},
     params, Vm,
 };
-use wasmedge_sys::AsyncResult;
+use wasmedge_sys::{utils, AsyncResult};
 
 use super::error::WasmRuntimeError;
 use super::oci_wasmedge;
@@ -120,6 +120,9 @@ pub fn prepare_module(
     })?;
     debug!("opening rootfs");
     let rootfs_path = oci::get_root(&spec).to_str().unwrap();
+    let mut mounts = oci::get_wasm_mounts(&spec);
+    let mut preopens = vec![rootfs_path];
+    preopens.append(&mut mounts);
     let envs = oci_wasmedge::env_to_wasi(&spec);
     let args = oci::get_args(&spec);
 
@@ -128,7 +131,7 @@ pub fn prepare_module(
     wasi_instance.initialize(
         Some(args.iter().map(|s| s as &str).collect()),
         Some(envs.iter().map(|s| s as &str).collect()),
-        Some(vec![rootfs_path]),
+        Some(preopens),
     );
 
     debug!("opening stdin");
@@ -388,7 +391,7 @@ mod wasitest {
     use super::*;
     use tempfile::tempdir;
     use wasmedge_sdk::{
-        config::{CommonConfigOptions, ConfigBuilder, HostRegistrationConfigOptions},
+        config::{CommonConfigOptions, ConfigBuilder},
         Vm,
     };
     use wasmedge_types::wat2wasm;
@@ -464,12 +467,7 @@ mod wasitest {
             .as_bytes(),
         )?;
 
-        let host_options = HostRegistrationConfigOptions::default().wasi(true);
-        let config = ConfigBuilder::new(CommonConfigOptions::default())
-            .with_host_registration_config(host_options)
-            .build()
-            .map_err(anyhow::Error::msg)?;
-        let mut cfg = InstanceConfig::new(Vm::new(Some(config)).map_err(anyhow::Error::msg)?);
+        let mut cfg = InstanceConfig::new(Wasi::new_engine()?);
         let cfg = cfg
             .set_bundle(dir.path().to_str().unwrap().to_string())
             .set_stdout(dir.path().join("stdout").to_str().unwrap().to_string());
@@ -506,7 +504,13 @@ mod wasitest {
 impl EngineGetter for Wasi {
     type E = Vm;
     fn new_engine() -> Result<Vm, Error> {
-        let host_options = HostRegistrationConfigOptions::default().wasi(true);
+        utils::load_plugin_from_default_paths();
+        let mut host_options = HostRegistrationConfigOptions::default();
+        host_options = host_options.wasi(true);
+        #[cfg(all(target_os = "linux", feature = "wasi_nn", target_arch = "x86_64"))]
+        {
+            host_options = host_options.wasi_nn(true);
+        }
         let config = ConfigBuilder::new(CommonConfigOptions::default())
             .with_host_registration_config(host_options)
             .build()

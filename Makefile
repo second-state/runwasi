@@ -1,18 +1,21 @@
 PREFIX ?= /usr/local
 INSTALL ?= install
 TEST_IMG_NAME ?= wasmtest:latest
-HYPER_DIRS = $(shell find demo/wasmedge_hyper_demo -type d)
-HYPER_FILES = $(shell find demo/wasmedge_hyper_demo -type f -name '*')
+HYPER_DIRS = $(shell find demo/hyper -type d)
+HYPER_FILES = $(shell find demo/hyper -type f -name '*')
 HYPER_IMG_NAME ?= hyper-demo:latest
-REQWEST_DIRS = $(shell find demo/wasmedge_reqwest_demo -type d)
-REQWEST_FILES = $(shell find demo/wasmedge_reqwest_demo -type f -name '*')
+REQWEST_DIRS = $(shell find demo/reqwest -type d)
+REQWEST_FILES = $(shell find demo/reqwest -type f -name '*')
 REQWEST_IMG_NAME ?= reqwest-demo:latest
-DB_DIRS = $(shell find demo/wasmedge-db-examples -type d)
-DB_FILES = $(shell find demo/wasmedge-db-examples -type f -name '*')
+DB_DIRS = $(shell find demo/db -type d)
+DB_FILES = $(shell find demo/db -type f -name '*')
 DB_IMG_NAME ?= db-demo:latest
-MICROSERVICE_DB_DIRS = $(shell find demo/microservice-rust-mysql -type d)
-MICROSERVICE_DB_FILES = $(shell find demo/microservice-rust-mysql -type f -name '*')
+MICROSERVICE_DB_DIRS = $(shell find demo/microservice_db -type d)
+MICROSERVICE_DB_FILES = $(shell find demo/microservice_db -type f -name '*')
 MICROSERVICE_DB_IMG_NAME ?= microservice-db-demo:latest
+WASINN_DIRS = $(shell find demo/wasinn -type d)
+WASINN_FILES = $(shell find demo/wasinn -type f -name '*')
+WASINN_IMG_NAME ?= wasinn-demo:latest
 export CONTAINERD_NAMESPACE ?= default
 
 TARGET ?= debug
@@ -21,9 +24,17 @@ ifeq ($(TARGET),release)
 RELEASE_FLAG = --release
 endif
 
+FEATURES_FLAG :=
+ifneq ($(FEATURES),)
+FEATURES_FLAG = --features $(FEATURES)
+endif
+
 .PHONY: build
 build:
-	cargo build $(RELEASE_FLAG)
+	cargo build $(RELEASE_FLAG) $(FEATURES_FLAG)
+
+clean:
+	cargo clean
 
 .PHONY: install
 install:
@@ -59,10 +70,16 @@ demo/out/microservice_db_img.tar: demo/images/microservice_db.Dockerfile \
 	mkdir -p $(@D)
 	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(MICROSERVICE_DB_IMG_NAME) -f ./demo/images/microservice_db.Dockerfile ./demo
 
+demo/out/wasinn_img.tar: demo/images/wasinn.Dockerfile \
+	$(WASINN_DIRS) $(WASINN_FILES)
+	mkdir -p $(@D)
+	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(WASINN_IMG_NAME) -f ./demo/images/wasinn.Dockerfile ./demo
+
 load_demo: demo/out/hyper_img.tar \
 	demo/out/db_img.tar \
 	demo/out/reqwest_img.tar \
-	demo/out/microservice_db_img.tar
+	demo/out/microservice_db_img.tar \
+	demo/out/wasinn_img.tar
 	$(foreach var,$^,\
 		sudo ctr -n $(CONTAINERD_NAMESPACE) image import $(var);\
 	)
