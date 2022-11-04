@@ -38,6 +38,6 @@ EOT
 
 FROM scratch AS release
 COPY --link --from=build /containerd-shim-wasmedge-v1 /containerd-shim-wasmedge-v1
-COPY --link --from=build /root/.wasmedge/lib/libwasmedge.so.0.0.0 /libwasmedge.so.0.0.0
+COPY --link --from=build /root/.wasmedge/lib/libwasmedge.so.0.0.1 /libwasmedge.so.0.0.1
 
 FROM release
