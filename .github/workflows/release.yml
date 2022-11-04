@@ -49,9 +49,8 @@ jobs:
           sudo apt install -y clang llvm
 
       - name: Install nightly Rust Toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
-          override: true
           toolchain: nightly
 
       - name: Build
