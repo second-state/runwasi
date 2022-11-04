@@ -20,7 +20,7 @@ RUN xx-apt-get install -y gcc g++ libc++6-dev zlib1g
 RUN rustup target add $(xx-info march)-unknown-$(xx-info os)-$(xx-info libc)
 RUN <<EOT bash
     set -ex
-    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --os=$(xx-info os) --arch=$(xx-info march)
+    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.11.2 --os=$(xx-info os) --arch=$(xx-info march)
 EOT
 
 COPY . .
