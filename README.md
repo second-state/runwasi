@@ -157,7 +157,7 @@ test instance::wasitest::test_wasi ... ok
 - **Build and install shim components**
 
 ```terminal
-$ make build
+$ make build FEATURES=wasmedge 
 $ sudo make install
 ```
 

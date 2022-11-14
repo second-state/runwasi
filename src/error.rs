@@ -1,3 +1,4 @@
+#[cfg(feature = "wasmedge")]
 use anyhow;
 use containerd_shim_wasm::sandbox::error;
 use containerd_shim_wasm::sandbox::oci;
@@ -9,6 +10,7 @@ pub enum WasmRuntimeError {
     OciError(#[from] oci::Error),
     #[error("{0}")]
     Error(#[from] error::Error),
+    #[cfg(feature = "wasmedge")]
     #[error("{0}")]
     AnyError(#[from] anyhow::Error),
     #[cfg(feature = "wasmedge")]

@@ -25,8 +25,8 @@ nix = "0.23"
 tempfile = "3.0"
 
 [features]
-wasi_nn = ["wasmedge-sys/wasi_nn", "wasmedge-sdk/wasi_nn"]
 wasmedge = ["wasmedge-sys", "wasmedge-sdk", "wasmedge-types"]
+wasi_nn = ["wasmedge-sys/wasi_nn", "wasmedge-sdk/wasi_nn"]
 
 [workspace]
 members = ["crates/containerd-shim-wasm"]

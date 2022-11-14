@@ -49,7 +49,7 @@ jobs:
     - name: Build and install conatiner wasmedge shim
       run: |
         rustup default nightly
-        make build
+        make build FEATURES=wasmedge
         sudo make install
 
     - name: Set up Docker Buildx
@@ -62,12 +62,12 @@ jobs:
 
     - name: Run basic test case
       run: |
-        sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'
+        sudo ctr run --rm --runtime=io.containerd.wasmwasi.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'
 
     - name: Run hype demo conatiner
       run: |
-        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testclient /client.wasm
-        nohup sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testserver /server.wasm &
+        sudo ctr run --rm --net-host --runtime=io.containerd.wasmwasi.v1 docker.io/library/hyper-demo:latest testclient /client.wasm
+        nohup sudo ctr run --rm --net-host --runtime=io.containerd.wasmwasi.v1 docker.io/library/hyper-demo:latest testserver /server.wasm &
 
     - name: Test hyper server
       run: |
@@ -76,17 +76,17 @@ jobs:
 
     - name: Run reqwest demo conatiner
       run: |
-        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/reqwest-demo:latest testreqwest
+        sudo ctr run --rm --net-host --runtime=io.containerd.wasmwasi.v1 docker.io/library/reqwest-demo:latest testreqwest
 
     - name: Run db demo conatiner
       run: |
-        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /insert.wasm
-        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /query.wasm
-        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /crud.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmwasi.v1 docker.io/library/db-demo:latest testdb /insert.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmwasi.v1 docker.io/library/db-demo:latest testdb /query.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmwasi.v1 docker.io/library/db-demo:latest testdb /crud.wasm
 
     - name: Run microservice with database demo conatiner
       run: |
-        nohup sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/microservice-db-demo:latest testmicroservice &
+        nohup sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmwasi.v1 docker.io/library/microservice-db-demo:latest testmicroservice &
 
     - name: Test microservice
       run: |
@@ -106,7 +106,7 @@ jobs:
 
     - name: Build and install conatiner wasmedge shim with support wasi-nn plugin
       run: |
-        make build FEATURES=wasi_nn
+        make build FEATURES=wasmedge,wasi_nn
         sudo make install
 
     - name: Add WASMEDGE_PLUGIN_PATH into service containerd
@@ -123,7 +123,7 @@ jobs:
         wget --no-clobber https://github.com/bytecodealliance/wasi-nn/raw/main/rust/examples/images/1.jpg -O demo/wasinn/pytorch-mobilenet-image/input.jpg
         sudo ctr run --rm \
           --mount type=bind,src=$PWD/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro \
-          --runtime=io.containerd.wasmedge.v1 \
+          --runtime=io.containerd.wasmwasi.v1 \
           docker.io/library/wasinn-demo:latest \
           testwasinn \
           /wasm /resource/mobilenet.pt /resource/input.jpg
