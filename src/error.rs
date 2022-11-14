@@ -11,6 +11,7 @@ pub enum WasmRuntimeError {
     Error(#[from] error::Error),
     #[error("{0}")]
     AnyError(#[from] anyhow::Error),
+    #[cfg(feature = "wasmedge")]
     #[error("{0}")]
     Wasmedge(#[from] Box<wasmedge_types::error::WasmEdgeError>),
 }

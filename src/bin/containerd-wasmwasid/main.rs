@@ -4,7 +4,9 @@ use containerd_shim_wasm::sandbox::EngineGetter;
 use containerd_shim_wasm::sandbox::{Local, ManagerService};
 use containerd_shim_wasm::services::sandbox_ttrpc::{create_manager, Manager};
 use log::info;
-use runwasi::instance::Wasi as WasiInstance;
+use runwasi::runtime_utils::runtime_check;
+#[cfg(feature = "wasmedge")]
+use runwasi::wasmedge::Wasi as WasiInstance;
 use ttrpc::{self, Server};
 
 fn main() {
@@ -15,7 +17,7 @@ fn main() {
     let service = create_manager(s);
 
     let mut server = Server::new()
-        .bind("unix:///run/io.containerd.wasmedge.v1/manager.sock")
+        .bind("unix:///run/io.containerd.wasmwasi.v1/manager.sock")
         .unwrap()
         .register_service(service);
 
