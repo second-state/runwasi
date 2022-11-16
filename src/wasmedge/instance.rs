@@ -24,8 +24,8 @@ use wasmedge_sdk::{
 };
 use wasmedge_sys::{utils, AsyncResult};
 
-use super::error::WasmRuntimeError;
 use super::oci_utils;
+use crate::error::WasmRuntimeError;
 
 static mut STDIN_FD: Option<RawFd> = None;
 static mut STDOUT_FD: Option<RawFd> = None;

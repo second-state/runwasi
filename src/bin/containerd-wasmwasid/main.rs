@@ -6,7 +6,7 @@ use containerd_shim_wasm::services::sandbox_ttrpc::{create_manager, Manager};
 use log::info;
 use runwasi::runtime_utils::runtime_check;
 #[cfg(feature = "wasmedge")]
-use runwasi::wasmedge::Wasi as WasiInstance;
+use runwasi::wasmedge::instance::Wasi as WasiInstance;
 use ttrpc::{self, Server};
 
 fn main() {

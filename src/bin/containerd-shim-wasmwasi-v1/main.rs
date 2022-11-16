@@ -2,7 +2,7 @@ use containerd_shim as shim;
 use containerd_shim_wasm::sandbox::ShimCli;
 use runwasi::runtime_utils::runtime_check;
 #[cfg(feature = "wasmedge")]
-use runwasi::wasmedge::Wasi as WasiInstance;
+use runwasi::wasmedge::instance::Wasi as WasiInstance;
 
 fn main() {
     #[cfg(feature = "wasmedge")]
