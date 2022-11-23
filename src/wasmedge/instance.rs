@@ -24,8 +24,8 @@ use wasmedge_sdk::{
 };
 use wasmedge_sys::{utils, AsyncResult};
 
-use super::error::WasmRuntimeError;
-use super::oci_wasmedge;
+use super::oci_utils;
+use crate::error::WasmRuntimeError;
 
 static mut STDIN_FD: Option<RawFd> = None;
 static mut STDOUT_FD: Option<RawFd> = None;
@@ -123,7 +123,7 @@ pub fn prepare_module(
     let mut mounts = oci::get_wasm_mounts(&spec);
     let mut preopens = vec![rootfs_path];
     preopens.append(&mut mounts);
-    let envs = oci_wasmedge::env_to_wasi(&spec);
+    let envs = oci_utils::env_to_wasi(&spec);
     let args = oci::get_args(&spec);
 
     debug!("setting up wasi");

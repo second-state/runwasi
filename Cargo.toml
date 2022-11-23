@@ -8,9 +8,9 @@ containerd-shim = "0.3.0"
 containerd-shim-wasm = { path = "crates/containerd-shim-wasm" }
 log = "0.4"
 ttrpc = "0.6"
-wasmedge-sys = "0.10.0"
-wasmedge-sdk = "0.5.0"
-wasmedge-types = "0.3.0"
+wasmedge-sys = { version = "0.10.0", optional = true }
+wasmedge-sdk = { version = "0.5.0", optional = true }
+wasmedge-types = { version = "0.3.0", optional = true }
 chrono = "0.4.19"
 anyhow = "1.0"
 cap-std = "0.24.1"
@@ -25,22 +25,23 @@ nix = "0.23"
 tempfile = "3.0"
 
 [features]
+wasmedge = ["wasmedge-sys", "wasmedge-sdk", "wasmedge-types"]
 wasi_nn = ["wasmedge-sys/wasi_nn", "wasmedge-sdk/wasi_nn"]
 
 [workspace]
 members = ["crates/containerd-shim-wasm"]
 
 [[bin]]
-name = "containerd-shim-wasmedge-v1"
-path = "src/bin/containerd-shim-wasmedge-v1/main.rs"
+name = "containerd-shim-wasmwasi-v1"
+path = "src/bin/containerd-shim-wasmwasi-v1/main.rs"
 
 [[bin]]
-name = "containerd-shim-wasmedged-v1"
-path = "src/bin/containerd-shim-wasmedged-v1/main.rs"
+name = "containerd-shim-wasmwasid-v1"
+path = "src/bin/containerd-shim-wasmwasid-v1/main.rs"
 
 [[bin]]
-name = "containerd-wasmedged"
-path = "src/bin/containerd-wasmedged/main.rs"
+name = "containerd-wasmwasid"
+path = "src/bin/containerd-wasmwasid/main.rs"
 
 [profile.release]
 panic = "abort"
