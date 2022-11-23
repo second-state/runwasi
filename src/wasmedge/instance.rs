@@ -121,7 +121,8 @@ pub fn prepare_module(
     debug!("opening rootfs");
     let rootfs_path = oci::get_root(&spec).to_str().unwrap();
     let mut mounts = oci::get_wasm_mounts(&spec);
-    let mut preopens = vec![rootfs_path];
+    let root = format!("/:{}", rootfs_path);
+    let mut preopens = vec![root.as_str()];
     preopens.append(&mut mounts);
     let envs = oci_utils::env_to_wasi(&spec);
     let args = oci::get_args(&spec);
