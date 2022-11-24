@@ -84,6 +84,12 @@ jobs:
         sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /query.wasm
         sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /crud.wasm
 
+    - name: Run rootfs mounts demo conatiner
+      run: |
+        sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 \
+          --mount type=bind,src=$PWD/demo/wasmedge-rootfs-mounts-demo,dst=/mnt,options=rbind:ro \
+          docker.io/library/preopens-demo:latest preopens /preopens.wasm
+
     - name: Run microservice with database demo conatiner
       run: |
         nohup sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/microservice-db-demo:latest testmicroservice &

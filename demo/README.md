@@ -1,11 +1,12 @@
 # Demo
 
 ## Index
-- [Hyper Cleint / Server](https://github.com/CaptainVincent/runwasi/tree/main/demo#demo-1-hyper-cleint--server)
-- [Reqwest](https://github.com/CaptainVincent/runwasi/tree/main/demo#demo-2-reqwest)
-- [Database](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-3-database)
-- [Microservice with Database](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-4-microservice-with-database)
-- [WASI NN](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-5-wasi-nn-x86-only)
+- [Hyper Cleint / Server](https://github.com/second-state/runwasi/tree/main/demo#demo-1-hyper-cleint--server)
+- [Reqwest](https://github.com/second-state/runwasi/tree/main/demo#demo-2-reqwest)
+- [Database](https://github.com/second-state/runwasi/tree/main/demo#case-3-database)
+- [Microservice with Database](https://github.com/second-state/runwasi/tree/main/demo#case-4-microservice-with-database)
+- [WASI NN](https://github.com/second-state/runwasi/tree/main/demo#case-5-wasi-nn-x86-only)
+- [WasmEdge rootfs/mounts demo](https://github.com/second-state/runwasi/tree/main/demo#case-6-rootfsmounts-demo)
 
 All below demo cases should be run after all shim components already installed that mentioned in [README.md](../README.md#examples). 
 
@@ -488,4 +489,74 @@ Executed graph inference
    3.) [951](11.5748)lemon
    4.) [950](10.4899)orange
    5.) [953](9.4834)pineapple, ananas
+```
+
+## [Case 6. Rootfs/mounts demo](https://github.com/second-state/wasmedge-rootfs-mounts-demo)
+
+
+### Execution
+
+- Run
+```terminal
+sudo ctr run --rm --mount type=bind,src=$(pwd)/demo/wasmedge-rootfs-mounts-demo,dst=/mnt,options=rbind:ro --runtime=io.containerd.wasmedge.v1 docker.io/library/preopens-demo:latest preopens /preopens.wasm
+```
+
+- Output
+```terminal
+Recursive list files and folder in "/mnt"
+/mnt in "/"
+/mnt/.git in "/"
+/mnt/Makefile in "/"
+/mnt/.gitignore in "/"
+/mnt/Cargo.toml in "/"
+/mnt/LICENSE in "/"
+/mnt/Dockerfile in "/"
+/mnt/src in "/"
+/mnt/src/main.rs in "/"
+Recursive list files and folder in "/mnt" ... done
+Recursive list files and folder in "/"
+/ in "/"
+/mnt in "/"
+/mnt/.git in "/"
+/mnt/Makefile in "/"
+/mnt/.gitignore in "/"
+/mnt/Cargo.toml in "/"
+/mnt/LICENSE in "/"
+/mnt/Dockerfile in "/"
+/mnt/src in "/"
+/mnt/src/main.rs in "/"
+/preopens.wasm in "/"
+/test-dir in "/"
+/test-dir/.cargo-lock in "/"
+/test-dir/wasmedge-rootfs-mounts-demo.wasm in "/"
+/test-dir/examples in "/"
+/test-dir/deps in "/"
+/test-dir/deps/wasmedge_rootfs_mounts_demo-3831c5fb466bd13e.wasm in "/"
+/test-dir/deps/same_file-f0d6011a39803642.d in "/"
+/test-dir/deps/wasmedge_rootfs_mounts_demo-3831c5fb466bd13e.d in "/"
+/test-dir/deps/libwalkdir-0faea8d97cebafaf.rmeta in "/"
+/test-dir/deps/walkdir-0faea8d97cebafaf.d in "/"
+/test-dir/deps/libwalkdir-0faea8d97cebafaf.rlib in "/"
+/test-dir/deps/libsame_file-f0d6011a39803642.rmeta in "/"
+/test-dir/deps/libsame_file-f0d6011a39803642.rlib in "/"
+/test-dir/.fingerprint in "/"
+/test-dir/.fingerprint/walkdir-0faea8d97cebafaf in "/"
+/test-dir/.fingerprint/walkdir-0faea8d97cebafaf/lib-walkdir.json in "/"
+/test-dir/.fingerprint/walkdir-0faea8d97cebafaf/invoked.timestamp in "/"
+/test-dir/.fingerprint/walkdir-0faea8d97cebafaf/dep-lib-walkdir in "/"
+/test-dir/.fingerprint/walkdir-0faea8d97cebafaf/lib-walkdir in "/"
+/test-dir/.fingerprint/wasmedge-rootfs-mounts-demo-3831c5fb466bd13e in "/"
+/test-dir/.fingerprint/wasmedge-rootfs-mounts-demo-3831c5fb466bd13e/dep-bin-wasmedge-rootfs-mounts-demo in "/"
+/test-dir/.fingerprint/wasmedge-rootfs-mounts-demo-3831c5fb466bd13e/invoked.timestamp in "/"
+/test-dir/.fingerprint/wasmedge-rootfs-mounts-demo-3831c5fb466bd13e/bin-wasmedge-rootfs-mounts-demo.json in "/"
+/test-dir/.fingerprint/wasmedge-rootfs-mounts-demo-3831c5fb466bd13e/bin-wasmedge-rootfs-mounts-demo in "/"
+/test-dir/.fingerprint/same-file-f0d6011a39803642 in "/"
+/test-dir/.fingerprint/same-file-f0d6011a39803642/dep-lib-same-file in "/"
+/test-dir/.fingerprint/same-file-f0d6011a39803642/lib-same-file in "/"
+/test-dir/.fingerprint/same-file-f0d6011a39803642/invoked.timestamp in "/"
+/test-dir/.fingerprint/same-file-f0d6011a39803642/lib-same-file.json in "/"
+/test-dir/build in "/"
+/test-dir/wasmedge-rootfs-mounts-demo.d in "/"
+/test-dir/incremental in "/"
+Recursive list files and folder in "/" ... done
 ```
