@@ -1,12 +1,12 @@
 # Demo
 
 ## Index
-- [Hyper Cleint / Server](https://github.com/CaptainVincent/runwasi/tree/main/demo#demo-1-hyper-cleint--server)
-- [Reqwest](https://github.com/CaptainVincent/runwasi/tree/main/demo#demo-2-reqwest)
-- [Database](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-3-database)
-- [Microservice with Database](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-4-microservice-with-database)
-- [WASI NN](https://github.com/CaptainVincent/runwasi/tree/main/demo#case-5-wasi-nn-x86-only)
-- [WasmEdge rootfs/mounts demo](https://github.com/second-state/wasmedge-rootfs-mounts-demo)
+- [Hyper Cleint / Server](https://github.com/second-state/runwasi/tree/main/demo#demo-1-hyper-cleint--server)
+- [Reqwest](https://github.com/second-state/runwasi/tree/main/demo#demo-2-reqwest)
+- [Database](https://github.com/second-state/runwasi/tree/main/demo#case-3-database)
+- [Microservice with Database](https://github.com/second-state/runwasi/tree/main/demo#case-4-microservice-with-database)
+- [WASI NN](https://github.com/second-state/runwasi/tree/main/demo#case-5-wasi-nn-x86-only)
+- [WasmEdge rootfs/mounts demo](https://github.com/second-state/runwasi/tree/main/demo#case-6-rootfsmounts-demo)
 
 All below demo cases should be run after all shim components already installed that mentioned in [README.md](../README.md#examples). 
 
