@@ -16,6 +16,9 @@ MICROSERVICE_DB_IMG_NAME ?= microservice-db-demo:latest
 WASINN_DIRS = $(shell find demo/wasinn -type d)
 WASINN_FILES = $(shell find demo/wasinn -type f -name '*')
 WASINN_IMG_NAME ?= wasinn-demo:latest
+PREOPENS_DIRS = $(shell find demo/wasmedge-rootfs-mounts-demo -type d)
+PREOPENS_FILES = $(shell find demo/wasmedge-rootfs-mounts-demo -type f -name '*')
+PREOPENS_IMG_NAME ?= preopens-demo:latest
 export CONTAINERD_NAMESPACE ?= default
 
 TARGET ?= debug
@@ -80,11 +83,17 @@ demo/out/wasinn_img.tar: demo/images/wasinn.Dockerfile \
 	mkdir -p $(@D)
 	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(WASINN_IMG_NAME) -f ./demo/images/wasinn.Dockerfile ./demo
 
+demo/out/preopens.tar: demo/images/preopens.Dockerfile \
+	$(PREOPENS_DIRS) $(PREOPENS_FILES)
+	mkdir -p $(@D)
+	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(PREOPENS_IMG_NAME) -f ./demo/images/preopens.Dockerfile ./demo
+
 load_demo: demo/out/hyper_img.tar \
 	demo/out/db_img.tar \
 	demo/out/reqwest_img.tar \
 	demo/out/microservice_db_img.tar \
-	demo/out/wasinn_img.tar
+	demo/out/wasinn_img.tar \
+	demo/out/preopens.tar
 	$(foreach var,$^,\
 		sudo ctr -n $(CONTAINERD_NAMESPACE) image import $(var);\
 	)
