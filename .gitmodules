@@ -13,3 +13,6 @@
 [submodule "demo/wasinn"]
 	path = demo/wasinn
 	url = https://github.com/second-state/WasmEdge-WASINN-examples.git
+[submodule "demo/wasmedge-rootfs-mounts-demo"]
+	path = demo/wasmedge-rootfs-mounts-demo
+	url = https://github.com/second-state/wasmedge-rootfs-mounts-demo.git
