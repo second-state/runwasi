@@ -34,7 +34,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/git/db \
     export "CARGO_TARGET_$(xx-info march | tr '[:lower:]' '[:upper:]' | tr - _)_UNKNOWN_$(xx-info os | tr '[:lower:]' '[:upper:]' | tr - _)_$(xx-info libc | tr '[:lower:]' '[:upper:]' | tr - _)_LINKER=$(xx-info)-gcc"
     export "CC_$(xx-info march | tr '[:lower:]' '[:upper:]' | tr - _)_UNKNOWN_$(xx-info os | tr '[:lower:]' '[:upper:]' | tr - _)_$(xx-info libc | tr '[:lower:]' '[:upper:]' | tr - _)=$(xx-info)-gcc"
     cargo build --release --features wasmedge --target=$(xx-info march)-unknown-$(xx-info os)-$(xx-info libc)
-    cp target/$(xx-info march)-unknown-$(xx-info os)-$(xx-info libc)/release/containerd-shim-wasmwasi-v1 /containerd-shim-wasmedge-v1
+    cp target/$(xx-info march)-unknown-$(xx-info os)-$(xx-info libc)/release/containerd-shim-wasmedge-v1 /containerd-shim-wasmedge-v1
 EOT
 
 FROM scratch AS release

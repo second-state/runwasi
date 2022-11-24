@@ -5,7 +5,7 @@ use runwasi::runtime_utils::runtime_check;
 use runwasi::wasmedge::instance::Wasi as WasiInstance;
 
 fn main() {
-    #[cfg(feature = "wasmedge")]
-    shim::run::<ShimCli<WasiInstance, wasmedge_sdk::Vm>>("io.containerd.wasmwasi.v1", None);
     runtime_check();
+    #[cfg(feature = "wasmedge")]
+    shim::run::<ShimCli<WasiInstance, wasmedge_sdk::Vm>>("io.containerd.wasmedge.v1", None);
 }

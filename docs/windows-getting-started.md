@@ -14,7 +14,7 @@ To finish off installing pre-requisites, install Rust following [this](https://w
 
 After following these steps and navigating to the runwasi directory in your terminal:
 - run `make build FEATURES=wasmedge`,
-- run `make install`,
+- run `make install RUNTIME=wasmedge`,
 - run `make test/out/img.tar`,
 - open a secondary terminal and run `containerd`, and
 - run `make load`.

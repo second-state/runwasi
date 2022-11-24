@@ -99,22 +99,22 @@ Shared mode requires precise control over real threads and as such should not be
 
 #### Components
 
-- **containerd-shim-wasmwasi-v1**
+- **containerd-shim-wasmedge-v1**
 
 This is a containerd shim which runs wasm workloads in [WasmEdge](https://github.com/WasmEdge/WasmEdge).
-You can use it with containerd's `ctr` by specifying `--runtime=io.containerd.wasmwasi.v1` when creating the container.
-And make sure the shim binary must be in $PATH (that is the $PATH that containerd sees). Usually you just run `make install` after `make build FEATURES=wasmedge`.
+You can use it with containerd's `ctr` by specifying `--runtime=io.containerd.wasmedge.v1` when creating the container.
+And make sure the shim binary must be in $PATH (that is the $PATH that containerd sees). Usually you just run `make install RUNTIME=wasmedge` after `make build FEATURES=wasmedge`.
 
 This shim runs one per pod.
 
-- **containerd-shim-wasmwasid-v1**
+- **containerd-shim-wasmedged-v1**
 
-A cli used to connect containerd to the `containerd-wasmwasid` sandbox daemon.
-When containerd requests for a container to be created, it fires up this shim binary which will connect to the `containerd-wasmwasid` service running on the host.
+A cli used to connect containerd to the `containerd-wasmedged` sandbox daemon.
+When containerd requests for a container to be created, it fires up this shim binary which will connect to the `containerd-wasmedged` service running on the host.
 The service will return a path to a unix socket which this shim binary will write back to containerd which containerd will use to connect to for shim requests.
-This binary does not serve requests, it is only responsible for sending requests to the `contianerd-wasmwasid` daemon to create or destroy sandboxes.
+This binary does not serve requests, it is only responsible for sending requests to the `contianerd-wasmedged` daemon to create or destroy sandboxes.
 
-- **containerd-wasmwasid**
+- **containerd-wasmedged**
 
 This is a sandbox manager that enables running 1 wasm host for the entire node instead of one per pod (or container).
 When a container is created, a request is sent to this service to create a sandbox.
@@ -122,8 +122,8 @@ The "sandbox" is a containerd task service that runs in a new thread on its own 
 
 The Wasmedge engine is shared between all sandboxes in the service.
 
-To use this shim, specify `io.containerd.wasmwasid.v1` as the runtime to use.
-You will need to make sure the containerd-wasmwasid daemon has already been started.
+To use this shim, specify `io.containerd.wasmedged.v1` as the runtime to use.
+You will need to make sure the containerd-wasmedged daemon has already been started.
 
 #### Test and demo with containerd
 
@@ -158,9 +158,9 @@ test instance::wasitest::test_wasi ... ok
 
 ```terminal
 $ make build FEATURES=wasmedge 
-$ sudo make install
+$ sudo make install RUNTIME=wasmedge
 ```
-> FEATURES here support wasmedge only
+> FEATURES and RUNTIME here support wasmedge only (wasi_nn optional)
 
 - **Demo**
 
@@ -168,7 +168,7 @@ Now you can use the test image provided in this repo to have test with, use `mak
 
 - Case 1.
 
-Run it with `sudo ctr run --rm --runtime=io.containerd.wasmwasi.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'`. You should see some output repeated like:
+Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'`. You should see some output repeated like:
 ```terminal
 hello
 exiting
@@ -176,7 +176,7 @@ exiting
 
 - Case 2.
 
-Run it with `sudo ctr run --rm --runtime=io.containerd.wasmwasi.v1 docker.io/library/wasmtest:latest testwasm`.
+Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm`.
 You should see some output repeated like:
 
 ```terminal

@@ -32,16 +32,19 @@ wasi_nn = ["wasmedge-sys/wasi_nn", "wasmedge-sdk/wasi_nn"]
 members = ["crates/containerd-shim-wasm"]
 
 [[bin]]
-name = "containerd-shim-wasmwasi-v1"
+name = "containerd-shim-wasmedge-v1"
 path = "src/bin/containerd-shim-wasmwasi-v1/main.rs"
+required-features = ["wasmedge"]
 
 [[bin]]
-name = "containerd-shim-wasmwasid-v1"
+name = "containerd-shim-wasmedged-v1"
 path = "src/bin/containerd-shim-wasmwasid-v1/main.rs"
+required-features = ["wasmedge"]
 
 [[bin]]
-name = "containerd-wasmwasid"
+name = "containerd-wasmedged"
 path = "src/bin/containerd-wasmwasid/main.rs"
+required-features = ["wasmedge"]
 
 [profile.release]
 panic = "abort"
