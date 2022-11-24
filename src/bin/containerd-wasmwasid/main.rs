@@ -11,6 +11,7 @@ use ttrpc::{self, Server};
 
 fn main() {
     info!("starting up!");
+    runtime_check();
     let s: ManagerService<_, Local<WasiInstance, _>> =
         ManagerService::new(WasiInstance::new_engine().unwrap());
     let s = Arc::new(Box::new(s) as Box<dyn Manager + Send + Sync>);

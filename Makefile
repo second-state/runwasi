@@ -29,6 +29,11 @@ ifneq ($(FEATURES),)
 FEATURES_FLAG = --features $(FEATURES)
 endif
 
+RUNTIME :=
+ifneq ($(RUNTIME),)
+RUNTIME = $(shell echo ${FEATURES} | grep -o "wasmedge")
+endif
+
 .PHONY: build
 build:
 	cargo build $(RELEASE_FLAG) $(FEATURES_FLAG)
@@ -38,9 +43,9 @@ clean:
 
 .PHONY: install
 install:
-	$(INSTALL) target/$(TARGET)/containerd-shim-wasmwasi-v1 $(PREFIX)/bin
-	$(INSTALL) target/$(TARGET)/containerd-shim-wasmwasid-v1 $(PREFIX)/bin
-	$(INSTALL) target/$(TARGET)/containerd-wasmwasid $(PREFIX)/bin
+	$(INSTALL) target/$(TARGET)/containerd-shim-$(RUNTIME)-v1 $(PREFIX)/bin
+	$(INSTALL) target/$(TARGET)/containerd-shim-$(RUNTIME)d-v1 $(PREFIX)/bin
+	$(INSTALL) target/$(TARGET)/containerd-$(RUNTIME)d $(PREFIX)/bin
 
 # TODO: build this manually instead of requiring buildx
 test/out/img.tar: test/image/Dockerfile test/image/src/main.rs test/image/Cargo.toml test/image/Cargo.lock

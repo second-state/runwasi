@@ -60,7 +60,7 @@ jobs:
       - name: package assets
         run: |
           mkdir _dist
-          cp target/release/containerd-shim-wasmwasi-v1 _dist/containerd-shim-wasmedge-v1
+          cp target/release/containerd-shim-wasmedge-v1 _dist/containerd-shim-wasmedge-v1
           cd _dist
           tar czf containerd-shim-wasmedge-v1-${{ env.RUNNER_OS }}-${{ matrix.arch }}.tar.gz containerd-shim-wasmedge-v1
       - name: upload binary as GitHub artifact
