@@ -29,7 +29,7 @@ wasmedge = ["wasmedge-sys", "wasmedge-sdk", "wasmedge-types"]
 wasi_nn = ["wasmedge-sys/wasi_nn", "wasmedge-sdk/wasi_nn"]
 
 [workspace]
-members = ["crates/containerd-shim-wasm"]
+members = ["crates/containerd-shim-wasm", "crates/wasi-demo-app", "crates/oci-tar-builder"]
 
 [[bin]]
 name = "containerd-shim-wasmedge-v1"
