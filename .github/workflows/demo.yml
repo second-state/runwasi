@@ -44,7 +44,9 @@ jobs:
 
     - name: Install WasmEdge
       run: |
-        curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | sudo bash -s
+        curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.11.2
+        sudo -E sh -c 'echo "$HOME/.wasmedge/lib" > /etc/ld.so.conf.d/libwasmedge.conf'
+        sudo ldconfig
 
     - name: Build and install conatiner wasmedge shim
       run: |
