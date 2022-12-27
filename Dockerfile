@@ -12,15 +12,17 @@ RUN apt-get update -y && apt-get install --no-install-recommends -y clang
 RUN rustup default nightly
 
 FROM base AS build
+SHELL ["/bin/bash", "-c"]
 ARG BUILD_TAGS TARGETPLATFORM
 ENV WASMEDGE_INCLUDE_DIR=/root/.wasmedge/include
 ENV WASMEDGE_LIB_DIR=/root/.wasmedge/lib
 ENV LD_LIBRARY_PATH=/root/.wasmedge/lib
 RUN xx-apt-get install -y gcc g++ libc++6-dev zlib1g
 RUN rustup target add $(xx-info march)-unknown-$(xx-info os)-$(xx-info libc)
-RUN <<EOT bash
+RUN <<EOT
     set -ex
-    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.11.2 --platform=$(xx-info os) --machine=$(xx-info march)
+    os=$(xx-info os)
+    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.11.2 --platform=${os^} --machine=$(xx-info march)
 EOT
 
 COPY . .
