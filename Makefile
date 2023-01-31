@@ -1,24 +1,14 @@
 PREFIX ?= /usr/local
 INSTALL ?= install
-TEST_IMG_NAME ?= wasmtest:latest
-HYPER_DIRS = $(shell find demo/hyper -type d)
-HYPER_FILES = $(shell find demo/hyper -type f -name '*')
-HYPER_IMG_NAME ?= hyper-demo:latest
-REQWEST_DIRS = $(shell find demo/reqwest -type d)
-REQWEST_FILES = $(shell find demo/reqwest -type f -name '*')
-REQWEST_IMG_NAME ?= reqwest-demo:latest
-DB_DIRS = $(shell find demo/db -type d)
-DB_FILES = $(shell find demo/db -type f -name '*')
-DB_IMG_NAME ?= db-demo:latest
-MICROSERVICE_DB_DIRS = $(shell find demo/microservice_db -type d)
-MICROSERVICE_DB_FILES = $(shell find demo/microservice_db -type f -name '*')
-MICROSERVICE_DB_IMG_NAME ?= microservice-db-demo:latest
-WASINN_DIRS = $(shell find demo/wasinn -type d)
-WASINN_FILES = $(shell find demo/wasinn -type f -name '*')
-WASINN_IMG_NAME ?= wasinn-demo:latest
-PREOPENS_DIRS = $(shell find demo/wasmedge-rootfs-mounts-demo -type d)
-PREOPENS_FILES = $(shell find demo/wasmedge-rootfs-mounts-demo -type f -name '*')
-PREOPENS_IMG_NAME ?= preopens-demo:latest
+BUILD_SCRIPT_PATH = $(PWD)/demo/utils/build.rs
+HYPER_CLIENT_PATH = demo/hyper/client
+HYPER_SERVER_PATH = demo/hyper/server
+REQWEST_PATH = demo/reqwest
+DB_MYSQL_PATH = demo/db/mysql
+DB_MYSQL_ASYNC_PATH = demo/db/mysql_async
+MICROSERVICE_DB_PATH = demo/microservice_db
+WASINN_PATH = demo/wasinn/pytorch-mobilenet-image/rust
+PREOPENS_PATH = demo/wasmedge-rootfs-mounts-demo
 export CONTAINERD_NAMESPACE ?= default
 
 TARGET ?= debug
@@ -61,43 +51,29 @@ target/wasm32-wasi/$(TARGET)/img.tar: target/wasm32-wasi/$(TARGET)/wasi-demo-app
 load: target/wasm32-wasi/$(TARGET)/img.tar
 	sudo ctr -n $(CONTAINERD_NAMESPACE) image import --all-platforms $<
 
-demo/out/hyper_img.tar: demo/images/hyper.Dockerfile \
-	$(HYPER_DIRS) $(HYPER_FILES) $(TOKIO_DIRS) $(TOKIO_FILES)
-	mkdir -p $(@D)
-	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(HYPER_IMG_NAME) -f ./demo/images/hyper.Dockerfile ./demo
+define build_img
+	@if ! test -f $1/build.rs; then \
+		echo "Setup build environment for" $1; \
+		cd $1; \
+		cp $(BUILD_SCRIPT_PATH) .; \
+		cargo add --build tar@0.4 sha256@1.1 log@0.4 env_logger@0.10 oci-spec@0.5 anyhow@1.0; \
+		cargo add --build oci-tar-builder --git https://github.com/containerd/runwasi; \
+	fi
+	cd $1 && cargo build --target=wasm32-wasi $(RELEASE_FLAG)
+	cd $1 && BUILD_IMAGE=TRUE cargo build --target=wasm32-wasi $(RELEASE_FLAG)
+endef
 
-demo/out/reqwest_img.tar: demo/images/reqwest.Dockerfile \
-	$(REQWEST_DIRS) $(REQWEST_FILES)
-	mkdir -p $(@D)
-	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(REQWEST_IMG_NAME) -f ./demo/images/reqwest.Dockerfile ./demo
+.PHONY: demo/%
+demo/%:
+	$(call build_img, $(patsubst %/target/wasm32-wasi/$(TARGET)/img.tar,demo/%,$*))
 
-demo/out/db_img.tar: demo/images/db.Dockerfile \
-	$(DB_DIRS) $(DB_FILES)
-	mkdir -p $(@D)
-	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(DB_IMG_NAME) -f ./demo/images/db.Dockerfile ./demo
-
-demo/out/microservice_db_img.tar: demo/images/microservice_db.Dockerfile \
-	$(MICROSERVICE_DB_DIRS) $(MICROSERVICE_DB_FILES)
-	mkdir -p $(@D)
-	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(MICROSERVICE_DB_IMG_NAME) -f ./demo/images/microservice_db.Dockerfile ./demo
-
-demo/out/wasinn_img.tar: demo/images/wasinn.Dockerfile \
-	$(WASINN_DIRS) $(WASINN_FILES)
-	mkdir -p $(@D)
-	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(WASINN_IMG_NAME) -f ./demo/images/wasinn.Dockerfile ./demo
-
-demo/out/preopens.tar: demo/images/preopens.Dockerfile \
-	$(PREOPENS_DIRS) $(PREOPENS_FILES)
-	mkdir -p $(@D)
-	docker buildx build --platform=wasi/wasm -o type=docker,dest=$@ -t $(PREOPENS_IMG_NAME) -f ./demo/images/preopens.Dockerfile ./demo
-
-load_demo: demo/out/hyper_img.tar \
-	demo/out/db_img.tar \
-	demo/out/reqwest_img.tar \
-	demo/out/microservice_db_img.tar \
-	demo/out/wasinn_img.tar \
-	demo/out/preopens.tar
+load_demo: $(HYPER_CLIENT_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(HYPER_SERVER_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(REQWEST_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(DB_MYSQL_ASYNC_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(MICROSERVICE_DB_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(WASINN_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(PREOPENS_PATH)/target/wasm32-wasi/$(TARGET)/img.tar
 	$(foreach var,$^,\
-		sudo ctr -n $(CONTAINERD_NAMESPACE) image import $(var);\
+		sudo ctr -n $(CONTAINERD_NAMESPACE) image import --all-platforms $(var);\
 	)
-

@@ -51,11 +51,9 @@ jobs:
     - name: Build and install conatiner wasmedge shim
       run: |
         rustup default nightly
+        rustup target add wasm32-wasi
         make build FEATURES=wasmedge
         sudo make install RUNTIME=wasmedge
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
 
     - name: Build all test and demo OCI images
       run: |
@@ -64,12 +62,12 @@ jobs:
 
     - name: Run basic test case
       run: |
-        sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'
+        sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasi-demo-app:latest testwasm /wasi-demo-app.wasm echo 'hello'
 
     - name: Run hype demo conatiner
       run: |
-        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testclient /client.wasm
-        nohup sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testserver /server.wasm &
+        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge_hyper_client:latest testclient
+        nohup sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge_hyper_server:latest testserver &
 
     - name: Test hyper server
       run: |
@@ -78,23 +76,26 @@ jobs:
 
     - name: Run reqwest demo conatiner
       run: |
-        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/reqwest-demo:latest testreqwest
+        sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge_reqwest_demo:latest testreqwest
 
     - name: Run db demo conatiner
       run: |
-        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /insert.wasm
-        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /query.wasm
-        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /crud.wasm
+        # sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /insert.wasm
+        # sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /query.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/crud:latest testdb /app.wasm
 
     - name: Run rootfs mounts demo conatiner
       run: |
         sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 \
           --mount type=bind,src=$PWD/demo/wasmedge-rootfs-mounts-demo,dst=/mnt,options=rbind:ro \
-          docker.io/library/preopens-demo:latest preopens /preopens.wasm
+          ghcr.io/containerd/runwasi/wasmedge-rootfs-mounts-demo:latest preopens
 
     - name: Run microservice with database demo conatiner
       run: |
-        nohup sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/microservice-db-demo:latest testmicroservice &
+        nohup sudo ctr run --rm --net-host \
+          --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql \
+          --runtime=io.containerd.wasmedge.v1 \
+          ghcr.io/containerd/runwasi/order_demo_service:latest testmicroservice &
 
     - name: Test microservice
       run: |
@@ -132,6 +133,6 @@ jobs:
         sudo ctr run --rm \
           --mount type=bind,src=$PWD/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro \
           --runtime=io.containerd.wasmedge.v1 \
-          docker.io/library/wasinn-demo:latest \
+          ghcr.io/containerd/runwasi/wasmedge-wasinn-example-mobilenet-image:latest \
           testwasinn \
-          /wasm /resource/mobilenet.pt /resource/input.jpg
+          /app.wasm /resource/mobilenet.pt /resource/input.jpg
