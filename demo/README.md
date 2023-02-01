@@ -23,7 +23,7 @@ $ make load_demo
 
 - Run
 ```terminal
-$ sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testclient /client.wasm
+$ sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge_hyper_client:latest testclient
 ```
 
 - Output
@@ -78,7 +78,7 @@ with a POST body: hello wasmedge
 
 - Run
 ```terminal
-$ sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/hyper-demo:latest testserver /server.wasm
+$ sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge_hyper_server:latest testserver
 ```
 
 - Output
@@ -105,7 +105,7 @@ $ sudo ctr task kill -s SIGKILL testserver
 
 - Run
 ```terminal
-$ sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 docker.io/library/reqwest-demo:latest testreqwest
+$ sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge_reqwest_demo:latest testreqwest
 ```
 
 - Output
@@ -178,7 +178,7 @@ You need start mysql service first. Here assume user/password is root/123.
 
 - Run - insert
 ```terminal
-$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /insert.wasm
+$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-mysql-driver-demo:latest testdb /insert.wasm
 ```
 
 - Output
@@ -219,7 +219,7 @@ Yay!
 
 - Run - query
 ```terminal
-$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /query.wasm
+$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-mysql-driver-demo:latest testdb /query.wasm
 ```
 
 - Output
@@ -240,7 +240,7 @@ $ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:330
 
 - Run - CRUD
 ```terminal
-$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/db-demo:latest testdb /crud.wasm
+$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/crud:latest testdb
 ```
 
 - Output
@@ -378,7 +378,7 @@ create new table
 
 - Run
 ```terminal
-$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 docker.io/library/microservice-db-demo:latest testmicroservice
+$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/order_demo_service:latest testmicroservice
 ```
 
 - Open second session and run
@@ -474,7 +474,7 @@ Congratulations!! We done.
 
 - Run
 ```terminal
-sudo ctr run --rm --mount type=bind,src=$(pwd)/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro --runtime=io.containerd.wasmedge.v1 docker.io/library/wasinn-demo:latest testwasinn /wasm /resource/mobilenet.pt /resource/input.jpg
+sudo ctr run --rm --mount type=bind,src=$(pwd)/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-wasinn-example-mobilenet-image:latest testwasinn /app.wasm /resource/mobilenet.pt /resource/input.jpg
 ```
 
 - Output
@@ -498,7 +498,7 @@ Executed graph inference
 
 - Run
 ```terminal
-sudo ctr run --rm --mount type=bind,src=$(pwd)/demo/wasmedge-rootfs-mounts-demo,dst=/mnt,options=rbind:ro --runtime=io.containerd.wasmedge.v1 docker.io/library/preopens-demo:latest preopens /preopens.wasm
+sudo ctr run --rm --mount type=bind,src=$(pwd)/demo/wasmedge-rootfs-mounts-demo,dst=/mnt,options=rbind:ro --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-rootfs-mounts-demo:latest preopens
 ```
 
 - Output

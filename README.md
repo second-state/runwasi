@@ -103,7 +103,7 @@ Shared mode requires precise control over real threads and as such should not be
 
 This is a containerd shim which runs wasm workloads in [WasmEdge](https://github.com/WasmEdge/WasmEdge).
 You can use it with containerd's `ctr` by specifying `--runtime=io.containerd.wasmedge.v1` when creating the container.
-And make sure the shim binary must be in $PATH (that is the $PATH that containerd sees). Usually you just run `make install RUNTIME=wasmedge` after `make build FEATURES=wasmedge`.
+And make sure the shim binary must be in $PATH (that is the $PATH that containerd sees). Usually you just run `sudo make install RUNTIME=wasmedge` after `make build FEATURES=wasmedge`.
 
 This shim runs one per pod.
 
@@ -160,15 +160,15 @@ test instance::wasitest::test_wasi ... ok
 $ make build FEATURES=wasmedge 
 $ sudo make install RUNTIME=wasmedge
 ```
-> FEATURES and RUNTIME here support wasmedge only (wasi_nn optional)
+> FEATURES and RUNTIME here support wasmedge only (wasi_nn is optional in FEATURES)
 
 - **Demo**
 
-Now you can use the test image provided in this repo to have test with, use `make load` to load it into containerd ([buildx](https://docs.docker.com/build/buildx/install/) is required).
+Now you can use the test image provided in this repo to have test with, use `make load` to load it into containerd.
 
 - Case 1.
 
-Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm /wasm echo 'hello'`. You should see some output repeated like:
+Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasi-demo-app:latest testwasm /wasi-demo-app.wasm echo 'hello'`. You should see some output repeated like:
 ```terminal
 hello
 exiting
@@ -176,7 +176,7 @@ exiting
 
 - Case 2.
 
-Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 docker.io/library/wasmtest:latest testwasm`.
+Run it with `sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasi-demo-app:latest testwasm`.
 You should see some output repeated like:
 
 ```terminal
