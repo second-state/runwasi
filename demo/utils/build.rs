@@ -29,16 +29,35 @@ fn main() {
 
     let app_path = bin_output_dir.join(wasm_name);
     let layer_path = out_dir.join("layer.tar");
-    tar::Builder::new(File::create(&layer_path).unwrap())
-        .append_path_with_name(&app_path, "app.wasm")
-        .unwrap();
+    let mut layer_builder = tar::Builder::new(File::create(&layer_path).unwrap());
+    if app_path.exists() {
+        layer_builder
+            .append_path_with_name(&app_path, "app.wasm")
+            .unwrap();
+    } else {
+        for element in bin_output_dir.read_dir().unwrap() {
+            let path = element.unwrap().path();
+            if let Some(extension) = path.extension() {
+                if extension == "wasm" {
+                    layer_builder
+                        .append_path_with_name(&path, path.file_name().unwrap())
+                        .unwrap();
+                }
+            }
+        }
+    }
 
     let mut builder = Builder::default();
-
     builder.add_layer(&layer_path);
 
+    let entrypoint = if app_path.exists() {
+        vec!["/app.wasm".to_owned()]
+    } else {
+        vec![]
+    };
+
     let config = spec::ConfigBuilder::default()
-        .entrypoint(vec!["/app.wasm".to_owned()])
+        .entrypoint(entrypoint)
         .build()
         .unwrap();
 

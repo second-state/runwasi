@@ -70,6 +70,7 @@ demo/%:
 load_demo: $(HYPER_CLIENT_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
 	$(HYPER_SERVER_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
 	$(REQWEST_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
+	$(DB_MYSQL_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
 	$(DB_MYSQL_ASYNC_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
 	$(MICROSERVICE_DB_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
 	$(WASINN_PATH)/target/wasm32-wasi/$(TARGET)/img.tar \
