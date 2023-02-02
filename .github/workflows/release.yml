@@ -20,7 +20,7 @@ jobs:
         include:
           - arch: arm64
             runner: arm64
-          - arch: amd64
+          - arch: x86_64
             runner: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -85,7 +85,7 @@ jobs:
         include:
           - arch: arm64
             runner: arm64
-          - arch: amd64
+          - arch: x86_64
             runner: ubuntu-latest
     steps:
       - name: Set RELEASE_VERSION ENV var
@@ -111,4 +111,4 @@ jobs:
           prerelease: true
           tag: ${{ github.ref }}
           body: |
-            Release of containerd-shim-wasmedge-v1:${{ env.RELEASE_VERSION }} for amd64 and arm64
+            Release of containerd-shim-wasmedge-v1:${{ env.RELEASE_VERSION }} for x86_64 and arm64
