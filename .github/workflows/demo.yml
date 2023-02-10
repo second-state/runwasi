@@ -80,6 +80,8 @@ jobs:
 
     - name: Run db demo conatiner
       run: |
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-mysql-driver-demo:latest testdb /insert.wasm
+        sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-mysql-driver-demo:latest testdb /query.wasm
         sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/crud:latest testdb
 
     - name: Run rootfs mounts demo conatiner

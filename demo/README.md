@@ -174,6 +174,68 @@ PUT: {
 
 You need start mysql service first. Here assume user/password is root/123.
 
+### Insert / Query
+
+- Run - insert
+```terminal
+$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-mysql-driver-demo:latest testdb /insert.wasm
+```
+
+- Output
+```terminal
+[src/bin/insert.rs:91] selected_payments = [
+    Payment {
+        customer_id: 1,
+        amount: 2,
+        account_name: None,
+    },
+    Payment {
+        customer_id: 3,
+        amount: 4,
+        account_name: Some(
+            "foo",
+        ),
+    },
+    Payment {
+        customer_id: 5,
+        amount: 6,
+        account_name: None,
+    },
+    Payment {
+        customer_id: 7,
+        amount: 8,
+        account_name: None,
+    },
+    Payment {
+        customer_id: 9,
+        amount: 10,
+        account_name: Some(
+            "bar",
+        ),
+    },
+]
+Yay!
+```
+
+- Run - query
+```terminal
+$ sudo ctr run --rm --net-host --env DATABASE_URL=mysql://root:123@127.0.0.1:3306/mysql --runtime=io.containerd.wasmedge.v1 ghcr.io/containerd/runwasi/wasmedge-mysql-driver-demo:latest testdb /query.wasm
+```
+
+- Output
+```terminal 
+[src/bin/query.rs:28] selected_dbs = [
+    Db {
+        host: "localhost",
+        db: "performance_schema",
+    },
+    Db {
+        host: "localhost",
+        db: "sys",
+    },
+]
+```
+
 ### Aync with MySQL
 
 - Run - CRUD
