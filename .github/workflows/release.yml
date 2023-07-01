@@ -40,7 +40,7 @@ jobs:
 
       - name: Setup WasmEdge build env
         run: |
-          curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --platform=${{ runner.os }} --machine=${{ matrix.arch }}
+          curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.11.2 --platform=${{ runner.os }} --machine=${{ matrix.arch }}
           echo "LD_LIBRARY_PATH=$HOME/.wasmedge/lib" >> $GITHUB_ENV
 
       - name: Install deps on arm64
