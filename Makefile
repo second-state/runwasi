@@ -56,7 +56,7 @@ define build_img
 		echo "Setup build environment for" $1; \
 		cd $1; \
 		cp $(BUILD_SCRIPT_PATH) .; \
-		cargo add --build tar@0.4 sha256@1.1 log@0.4 env_logger@0.10 oci-spec@0.5 anyhow@1.0; \
+		cargo add --build tar@0.4 sha256@=1.1.4 log@0.4 env_logger@0.10 oci-spec@0.5 anyhow@1.0; \
 		cargo add --build oci-tar-builder --git https://github.com/containerd/runwasi --rev a2f86e4; \
 	fi
 	cd $1 && cargo build --target=wasm32-wasi $(RELEASE_FLAG)
