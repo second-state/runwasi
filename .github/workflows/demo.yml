@@ -35,6 +35,12 @@ jobs:
         sudo ACCEPT_EULA=Y apt-get upgrade
         sudo apt-get install wget git curl software-properties-common build-essential
 
+    - name: Manually update GitHub's containerd
+      run: |
+        wget https://github.com/containerd/containerd/releases/download/v1.7.5/containerd-1.7.5-linux-amd64.tar.gz
+        sudo tar Czxvf /usr containerd-1.7.5-linux-amd64.tar.gz
+        sudo systemctl restart containerd
+
     - name: Install and run MySQL
       run: |
         sudo apt-get update
