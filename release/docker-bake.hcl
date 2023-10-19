@@ -34,7 +34,7 @@ target "bin" {
     inherits = ["image"]
     platforms = split(",", "${platforms}")
     args = {
-        "CARGO_FLAGS" = "--no-default-features"
+        "CARGO_FLAGS" = "--no-default-features --features wasi_nn"
     }
 }
 
