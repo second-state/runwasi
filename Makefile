@@ -14,6 +14,8 @@ DB_MYSQL_ASYNC_PATH = demo/db/mysql_async
 MICROSERVICE_DB_PATH = demo/microservice_db
 WASINN_PATH = demo/wasinn/pytorch-mobilenet-image/rust
 PREOPENS_PATH = demo/rootfs-mounts
+LLAMA2_PATH = demo/llama2/simple
+LLAMA2_CHAT_PATH = demo/llama2/chat
 
 # We have a bit of fancy logic here to determine the target
 # since we support building for gnu and musl
@@ -224,14 +226,8 @@ endef
 demo/%:
 	$(call build_img, $(patsubst %/target/wasm32-wasi/$(OPT_PROFILE)/img.tar,demo/%,$*))
 
-load_demo: $(HYPER_CLIENT_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(HYPER_SERVER_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(REQWEST_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(DB_MYSQL_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(DB_MYSQL_ASYNC_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(MICROSERVICE_DB_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(WASINN_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
-	$(PREOPENS_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar
+load_demo: $(LLAMA2_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(LLAMA2_CHAT_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar
 	$(foreach var,$^,\
 		sudo ctr -n $(CONTAINERD_NAMESPACE) image import --all-platforms $(var);\
 	)

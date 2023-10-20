@@ -19,3 +19,6 @@
 [submodule "demo/rootfs-mounts"]
 	path = demo/rootfs-mounts
 	url = https://github.com/second-state/wasmedge-rootfs-mounts-demo.git
+[submodule "demo/llama2"]
+	path = demo/llama2
+	url = https://github.com/second-state/llama-utils.git

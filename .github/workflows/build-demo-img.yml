@@ -12,7 +12,7 @@ on:
         default: 'info'
   push:
     branches:
-      - "main"
+      - "preview"
     paths:
       - "demo/**"
       - ".github/workflows/build-demo-img.yml"
@@ -48,7 +48,6 @@ jobs:
 
       - name: Build all test and demo OCI images
         run: |
-          make load
           make load_demo
 
       - name: Login to ghcr.io
