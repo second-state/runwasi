@@ -1,0 +1,7 @@
+# syntax=docker/dockerfile:1
+
+FROM scratch AS release
+COPY --link --from=lib /lib/* /lib/
+COPY --link --from=bin /bin/* /bin/
+
+FROM release
