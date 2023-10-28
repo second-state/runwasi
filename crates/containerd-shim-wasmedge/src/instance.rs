@@ -6,6 +6,8 @@ use log::debug;
 use wasmedge_sdk::config::{ConfigBuilder, HostRegistrationConfigOptions};
 use wasmedge_sdk::plugin::PluginManager;
 use wasmedge_sdk::VmBuilder;
+#[cfg(feature = "wasi_nn")]
+use wasmedge_sys::plugin::PluginManager as p;
 
 pub type WasmEdgeInstance = Instance<WasmEdgeEngine>;
 
@@ -55,6 +57,17 @@ impl Engine for WasmEdgeEngine {
         };
 
         PluginManager::load(None)?;
+        // preload must before register wasinn plugin
+        #[cfg(feature = "wasi_nn")]
+        for env in envs {
+            let parts: Vec<&str> = env.split('=').collect();
+            if parts.len() == 2 {
+                let key = parts[0];
+                if key == "WASMEDGE_WASINN_PRELOAD" {
+                    p::nn_preload(vec![parts[1]]);
+                }
+            }
+        }
         let vm = vm.auto_detect_plugins()?;
 
         let vm = match ctx.wasm_layers() {

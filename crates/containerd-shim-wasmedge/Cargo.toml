@@ -11,7 +11,8 @@ log = { workspace = true }
 oci-spec = { workspace = true, features = ["runtime"] }
 ttrpc = { workspace = true }
 
-wasmedge-sdk = { version = "0.12.2" }
+wasmedge-sdk = { git = "https://github.com/WasmEdge/wasmedge-rust-sdk.git" }
+wasmedge-sys = { git = "https://github.com/WasmEdge/wasmedge-rust-sdk.git" }
 
 [dev-dependencies]
 containerd-shim-wasm = { workspace = true, features = ["testing"] }
