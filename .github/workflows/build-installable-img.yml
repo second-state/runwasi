@@ -12,7 +12,7 @@ on:
         default: 'info'
   push:
     branches:
-      - "main"
+      - "preview"
     tags:
       - "v*.*.*"
     paths:
@@ -33,15 +33,15 @@ jobs:
         id: generate-plugins
         run: |
           plugins=()
-          plugins+=("wasi_nn-openvino")
-          plugins+=("wasi_crypto")
-          plugins+=("wasi_nn-pytorch")
-          plugins+=("wasi_nn-tensorflowlite")
+          # plugins+=("wasi_nn-openvino")
+          # plugins+=("wasi_crypto")
+          # plugins+=("wasi_nn-pytorch")
+          # plugins+=("wasi_nn-tensorflowlite")
           plugins+=("wasi_nn-ggml")
-          plugins+=("wasmedge_tensorflow")
-          plugins+=("wasmedge_tensorflowlite")
-          plugins+=("wasmedge_image")
-          plugins+=("wasm_bpf")
+          # plugins+=("wasmedge_tensorflow")
+          # plugins+=("wasmedge_tensorflowlite")
+          # plugins+=("wasmedge_image")
+          # plugins+=("wasm_bpf")
           plugins=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${plugins[@]}")
           echo "Updated environments list: $plugins"
           echo "plugins=$plugins" >> $GITHUB_OUTPUT
@@ -69,7 +69,7 @@ jobs:
           images: ghcr.io/second-state/runwasi-wasmedge-plugin
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=lib.${{ matrix.plugin }}
+            type=raw,value=lib.${{ matrix.plugin }}-preview
             # type=raw,value=lib.${{ matrix.plugin }}.${{ github.sha }}
           bake-target: meta-helper
           labels: |
@@ -97,7 +97,7 @@ jobs:
         uses: docker/bake-action@v4
         env:
           plugin: ${{ matrix.plugin }}
-          platforms: ${{ matrix.plugin == 'wasi_nn-pytorch' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          platforms: ${{ matrix.plugin == 'wasi_nn-pytorch' || matrix.plugin == 'wasi_nn-ggml' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
         with:
           files: |
             release/docker-bake.hcl
@@ -126,7 +126,7 @@ jobs:
           images: ghcr.io/second-state/runwasi-wasmedge
           # generate Docker tags based on the following events/attributes
           tags: |
-            latest
+            preview
             # type=raw,value=bin.${{ github.sha }}
           bake-target: meta-helper
           labels: |
@@ -152,6 +152,8 @@ jobs:
 
       - name: Build and push
         uses: docker/bake-action@v4
+        env:
+          platforms: 'linux/amd64'
         with:
           files: |
             release/docker-bake.hcl
@@ -184,7 +186,7 @@ jobs:
           images: ghcr.io/second-state/runwasi-wasmedge-plugin
           # generate Docker tags based on the following events/attributes
           tags: |
-            type=raw,value=allinone.${{ matrix.plugin }}
+            type=raw,value=allinone.${{ matrix.plugin }}-preview
             # type=raw,value=allinone.${{ matrix.plugin }}.${{ github.sha }}
           bake-target: meta-helper
           labels: |
@@ -212,7 +214,7 @@ jobs:
         uses: docker/bake-action@v4
         env:
           plugin: ${{ matrix.plugin }}
-          platforms: ${{ matrix.plugin == 'wasi_nn-pytorch' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          platforms: ${{ matrix.plugin == 'wasi_nn-pytorch' || matrix.plugin == 'wasi_nn-ggml' && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
         with:
           files: |
             release/docker-bake.hcl
