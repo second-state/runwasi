@@ -1,0 +1,136 @@
+name: full-testing
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'info'
+  push:
+    branches:
+      - "main"
+  schedule:
+    - cron: "0 0 */1 * *"
+
+jobs:
+  run-all-examples:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install apt-get packages
+        run: |
+          sudo ACCEPT_EULA=Y apt-get update
+          sudo ACCEPT_EULA=Y apt-get upgrade
+          sudo apt-get install wget git curl software-properties-common build-essential libdbus-1-dev \
+            pkg-config libseccomp-dev protobuf-compiler libprotobuf-dev
+
+      - name: Manually update GitHub's containerd
+        run: |
+          wget https://github.com/containerd/containerd/releases/download/v1.7.5/containerd-1.7.5-linux-amd64.tar.gz
+          sudo tar Czxvf /usr containerd-1.7.5-linux-amd64.tar.gz
+          sudo systemctl restart containerd
+
+      - name: Install and run MySQL
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install mysql-server libmysqlclient-dev curl
+          sudo service mysql start
+          mysql -e "PURGE BINARY LOGS BEFORE now();" -uroot -proot
+
+      - name: Install WasmEdge lib
+        run: |
+          curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.13.5
+          sudo -E sh -c 'echo "$HOME/.wasmedge/lib" > /etc/ld.so.conf.d/libwasmedge.conf'
+          sudo ldconfig
+
+      - name: Build and install WasmEdge shim
+        run: |
+          make install-wasmedge FEATURES_wasmedge=--no-default-features
+
+      - name: Build all test and demo OCI images
+        run: |
+          make load
+          make load_demo
+
+      - name: Run basic test case
+        run: |
+          sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 \
+            ghcr.io/second-state/runwasi-demo:wasi-demo-app testwasm \
+            /wasi-demo-app.wasm echo 'hello'
+
+      - name: Run hype client example
+        run: |
+          sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 \
+            ghcr.io/second-state/runwasi-demo:wasmedge_hyper_client testclient
+
+      - name: Run hyper server example
+        run: |
+          nohup sudo ctr run --rm --net-host \
+            --runtime=io.containerd.wasmedge.v1 \
+            ghcr.io/second-state/runwasi-demo:wasmedge_hyper_server testserver &
+          sleep 3
+          curl http://localhost:8080/echo -X POST -d "WasmEdge"
+          sudo ctr task kill -s SIGKILL testserver
+
+      - name: Run reqwest example
+        run: |
+          sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 \
+            ghcr.io/second-state/runwasi-demo:wasmedge_reqwest_demo testreqwest
+
+      - name: Run db example
+        run: |
+          sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 \
+            --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql \
+            ghcr.io/second-state/runwasi-demo:wasmedge-mysql-driver-demo testdb \
+            /insert.wasm
+          sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 \
+            --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql \
+            ghcr.io/second-state/runwasi-demo:wasmedge-mysql-driver-demo testdb \
+            /query.wasm
+          sudo ctr run --rm --net-host  -runtime=io.containerd.wasmedge.v1 \
+            --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql \
+            ghcr.io/second-state/runwasi-demo:crud testdb
+
+      - name: Run rootfs mounts example
+        run: |
+          sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 \
+            --mount type=bind,src=$PWD/demo/rootfs-mounts,dst=/mnt,options=rbind:ro \
+            ghcr.io/second-state/runwasi-demo:wasmedge-rootfs-mounts-demo preopens
+
+      - name: Run microservice with database example
+        run: |
+          nohup sudo ctr run --rm --net-host --runtime=io.containerd.wasmedge.v1 \
+            --env DATABASE_URL=mysql://root:root@127.0.0.1:3306/mysql \
+            ghcr.io/second-state/runwasi-demo:order_demo_service testmicroservice &
+          sleep 3
+          curl http://localhost:8080/init
+          curl http://localhost:8080/create_orders -X POST -d @demo/microservice_db/orders.json
+          curl http://localhost:8080/orders
+          curl http://localhost:8080/update_order -X POST -d @demo/microservice_db/update_order.json
+          curl http://localhost:8080/delete_order?id=2
+          sudo ctr task kill -s SIGKILL testmicroservice
+
+      - name: Install WASI-NN PyTorch plugin
+        run: |
+          sudo ctr content fetch docker.io/vincent2nd/runwasi-wasmedge-plugin:lib.wasi_nn-pytorch
+          sudo ctr install docker.io/vincent2nd/runwasi-wasmedge-plugin:lib.wasi_nn-pytorch -l -r
+
+      - name: Run WASI-NN PyTorch example
+        run: |
+          sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 \
+            --mount type=bind,src=/opt/containerd/lib,dst=/opt/containerd/lib,options=bind:ro \
+            --mount type=bind,src=$PWD/demo/wasinn/pytorch-mobilenet-image,dst=/resource,options=rbind:ro \
+            --env WASMEDGE_PLUGIN_PATH=/opt/containerd/lib \
+            ghcr.io/second-state/runwasi-demo:wasmedge-wasinn-example-mobilenet-image \
+            testwasinn /app.wasm /resource/mobilenet.pt /resource/input.jpg
