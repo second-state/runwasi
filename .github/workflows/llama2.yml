@@ -1,0 +1,75 @@
+name: llama2
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'info'
+  push:
+    branches:
+      - "main"
+  schedule:
+    - cron: "0 0 */1 * *"
+
+jobs:
+  preview-feature:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Manually update GitHub's containerd
+        run: |
+          wget https://github.com/containerd/containerd/releases/download/v1.7.5/containerd-1.7.5-linux-amd64.tar.gz
+          sudo tar Czxvf /usr containerd-1.7.5-linux-amd64.tar.gz
+          sudo systemctl restart containerd
+
+      - name: Set up Docker
+        uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Fetch Llama-2-7B-GGUF model
+        run: curl -LO https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q5_K_M.gguf
+
+      - name: Fetch WASI-NN GGML with LLAMA2 example image
+        run: sudo ctr image pull ghcr.io/second-state/runwasi-demo:llama-simple
+
+      - name: Install WASI-NN GGML plugin (preview)
+        run: |
+          sudo ctr content fetch ghcr.io/second-state/runwasi-wasmedge-plugin:allinone.wasi_nn-ggml
+          sudo ctr install ghcr.io/second-state/runwasi-wasmedge-plugin:allinone.wasi_nn-ggml -l -r
+
+      - name: Run WASI-NN GGML with LLAMA2 example (preview) through containerd
+        run: |
+          sudo ctr run --rm --runtime=io.containerd.wasmedge.v1 \
+            --mount type=bind,src=/opt/containerd/lib,dst=/opt/containerd/lib,options=bind:ro \
+            --mount type=bind,src=$PWD,dst=/resource,options=bind:ro \
+            --env WASMEDGE_PLUGIN_PATH=/opt/containerd/lib \
+            --env WASMEDGE_WASINN_PRELOAD=default:GGML:CPU:/resource/llama-2-7b.Q5_K_M.gguf \
+            ghcr.io/second-state/runwasi-demo:llama-simple testggml /app.wasm \
+            --model-alias default --ctx-size 4096 --n-predict 128 --log-enable --stream-stdout \
+            --prompt 'Robert Oppenheimer most important achievement is '
+
+      - name: Run WASI-NN GGML with LLAMA2 example (preview) through docker
+        run: |
+          docker run --rm --runtime=io.containerd.wasmedge.v1 --platform wasi/wasm \
+            -v /opt/containerd/lib:/opt/containerd/lib \
+            -v $PWD:/resource \
+            --env WASMEDGE_PLUGIN_PATH=/opt/containerd/lib \
+            --env WASMEDGE_WASINN_PRELOAD=default:GGML:CPU:/resource/llama-2-7b.Q5_K_M.gguf \
+            ghcr.io/second-state/runwasi-demo:llama-simple \
+            --model-alias default --ctx-size 4096 --n-predict 128 --log-enable --stream-stdout \
+            --prompt 'Robert Oppenheimer most important achievement is '
