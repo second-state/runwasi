@@ -23,8 +23,8 @@ spec:
       runtimeClassName: wasm
       containers:
       - name: demo
-        image: ghcr.io/containerd/runwasi/wasi-demo-app:latest
-        imagePullPolicy: Never
+        image: ghcr.io/second-state/runwasi-demo:wasi-demo-app
+        # imagePullPolicy: Never
       - name: nginx
         image: docker.io/nginx:latest
         ports:
