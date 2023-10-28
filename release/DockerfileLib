@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+
+ARG XX_VERSION=1.2.1
+
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
+FROM ubuntu:latest AS base
+COPY --from=xx / /
+
+RUN apt-get update && apt-get install -y curl git python3 unzip
+
+COPY ./release/utils/* /
+
+ARG PLUGIN=""
+SHELL ["/bin/bash", "-c"]
+RUN <<EOT
+    set -ex
+    os=$(xx-info os)
+    plugins=$( [ -n "$PLUGIN" ] && echo "--plugin $PLUGIN" || echo "" )
+    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.13.4 --platform=${os^} --machine=$(xx-info march) $plugins
+    mkdir -p /dynlib
+    ./install_dependencies.sh $PLUGIN /dynlib
+    for file in /root/.wasmedge/plugin/*.so; do
+        ./copy_sys_dependencies.sh $file /dynlib
+    done
+EOT
+
+FROM scratch AS release
+COPY --link --from=base /root/.wasmedge/lib/* /lib/
+COPY --link --from=base /root/.wasmedge/plugin/* /lib/
+COPY --link --from=base /dynlib/ /lib/
+
+FROM release

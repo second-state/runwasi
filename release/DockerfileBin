@@ -1,0 +1,66 @@
+# syntax=docker/dockerfile:1
+
+ARG RUST_VERSION=1.72.0
+ARG XX_VERSION=1.2.1
+ARG CRATE="containerd-shim-wasmedge"
+
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:${XX_VERSION} AS xx
+FROM --platform=$BUILDPLATFORM rust:${RUST_VERSION}-bullseye AS base
+COPY --from=xx / /
+
+COPY ./release/utils/dockerfile-utils.sh /usr/bin/dockerfile-utils
+
+# Install host dependencies
+RUN dockerfile-utils install_host
+
+# See https://github.com/tonistiigi/xx/issues/108
+RUN sed -i -E 's/xx-clang --setup-target-triple/XX_VENDOR=\$vendor xx-clang --setup-target-triple/' $(which xx-cargo) && \
+    sed -i -E 's/\$\(xx-info\)-/\$\(XX_VENDOR=\$vendor xx-info\)-/g' $(which xx-cargo)
+
+FROM base AS build
+WORKDIR /src
+
+ARG TARGETPLATFORM
+
+RUN dockerfile-utils install_target
+
+SHELL ["/bin/bash", "-c"]
+RUN <<EOT
+    set -ex
+    os=$(xx-info os)
+    march=$(xx-info march)
+    mkdir -p /dynlib
+    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.13.4 --platform=${os^} --machine=$(xx-info march)
+EOT
+
+RUN --mount=type=bind,target=/src,rw,source=. \
+    --mount=type=cache,target=/usr/local/cargo/git/db \
+    --mount=type=cache,target=/usr/local/cargo/registry/cache \
+    --mount=type=cache,target=/usr/local/cargo/registry/index \
+    CARGO_NET_GIT_FETCH_WITH_CLI="true" \
+    cargo fetch
+
+ARG CRATE
+ARG CARGO_FLAGS=""
+ARG TARGETPLATFORM
+ENV WASMEDGE_INCLUDE_DIR=/root/.wasmedge/include
+ENV WASMEDGE_LIB_DIR=/root/.wasmedge/lib
+ENV LD_LIBRARY_PATH=/root/.wasmedge/lib
+RUN --mount=type=bind,target=/src,rw,source=. \
+    --mount=type=cache,target=/usr/local/cargo/git/db \
+    --mount=type=cache,target=/usr/local/cargo/registry/cache \
+    --mount=type=cache,target=/usr/local/cargo/registry/index \
+    --mount=type=cache,target=/build,id=runwasi-cargo-build-cache-${CRATE}-${TARGETPLATFORM} <<EOT
+    set -ex
+    . dockerfile-utils setup_build
+    package="$package --package=${CRATE}"
+    xx-cargo build --release ${package} ${CARGO_FLAGS} --target-dir /build
+    export TARGET_PATH="/build/$(xx-cargo --print-target-triple)/release/"
+    cp $TARGET_PATH/containerd-shim-wasmedge-v1 /
+EOT
+
+FROM scratch AS release
+COPY --link --from=build /containerd-shim-wasmedge-v1 /bin/
+COPY --link --from=build /root/.wasmedge/lib/* /lib/
+
+FROM release
