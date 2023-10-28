@@ -1,3 +1,24 @@
 [submodule "webassembly-benchmarks"]
 	path = benches/webassembly-benchmarks
 	url = https://github.com/jedisct1/webassembly-benchmarks
+[submodule "demo/db"]
+	path = demo/db
+	url = https://github.com/WasmEdge/wasmedge-db-examples.git
+[submodule "demo/hyper"]
+	path = demo/hyper
+	url = https://github.com/WasmEdge/wasmedge_hyper_demo.git
+[submodule "demo/reqwest"]
+	path = demo/reqwest
+	url = https://github.com/WasmEdge/wasmedge_reqwest_demo.git
+[submodule "demo/microservice_db"]
+	path = demo/microservice_db
+	url = https://github.com/second-state/microservice-rust-mysql.git
+[submodule "demo/wasinn"]
+	path = demo/wasinn
+	url = https://github.com/second-state/WasmEdge-WASINN-examples.git
+[submodule "demo/rootfs-mounts"]
+	path = demo/rootfs-mounts
+	url = https://github.com/second-state/wasmedge-rootfs-mounts-demo.git
+[submodule "demo/llama2"]
+	path = demo/llama2
+	url = https://github.com/second-state/llama-utils.git

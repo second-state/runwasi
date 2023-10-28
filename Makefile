@@ -5,8 +5,19 @@ LN ?= ln -sf
 TEST_IMG_NAME ?= wasmtest:latest
 RUNTIMES ?= wasmedge wasmtime wasmer
 CONTAINERD_NAMESPACE ?= default
+BUILD_SCRIPT_PATH = $(PWD)/demo/utils/build.rs
+HYPER_CLIENT_PATH = demo/hyper/client
+HYPER_SERVER_PATH = demo/hyper/server
+REQWEST_PATH = demo/reqwest
+DB_MYSQL_PATH = demo/db/mysql
+DB_MYSQL_ASYNC_PATH = demo/db/mysql_async
+MICROSERVICE_DB_PATH = demo/microservice_db
+WASINN_PATH = demo/wasinn/pytorch-mobilenet-image/rust
+PREOPENS_PATH = demo/rootfs-mounts
+LLAMA2_PATH = demo/llama2/simple
+LLAMA2_CHAT_PATH = demo/llama2/chat
 
-# We have a bit of fancy logic here to determine the target 
+# We have a bit of fancy logic here to determine the target
 # since we support building for gnu and musl
 # TARGET must evenutually match one of the values in the cross.toml
 HOST_TARGET = $(shell rustc --version -v | sed -En 's/host: (.*)/\1/p')
@@ -49,13 +60,13 @@ ifeq ($(OPT_PROFILE),release)
 RELEASE_FLAG = --release
 endif
 
-FEATURES_wasmedge = 
+FEATURES_wasmedge =
 WARNINGS = -D warnings
 ifeq ($(OS), Windows_NT)
 # need to turn off static/standalone for wasm-edge
 FEATURES_wasmedge = --no-default-features
 # turn of warnings until windows is fully supported #49
-WARNINGS = 
+WARNINGS =
 endif
 
 DOCKER_BUILD ?= docker buildx build
@@ -197,7 +208,37 @@ load/oci: dist/img-oci.tar
 .PHONY:
 target/wasm32-wasi/$(OPT_PROFILE)/img-oci.tar: target/wasm32-wasi/$(OPT_PROFILE)/wasi-demo-app.wasm
 	mkdir -p ${CURDIR}/bin/$(OPT_PROFILE)/
-	cargo run --bin oci-tar-builder -- --name wasi-demo-app --repo ghcr.io/containerd/runwasi --tag latest --module ./target/wasm32-wasi/$(OPT_PROFILE)/wasi-demo-app.wasm -o target/wasm32-wasi/$(OPT_PROFILE)/img-oci.tar
+	cargo run --bin oci-tar-builder -- --name wasi-demo-app --repo ghcr.io/second-state/runwasi-demo --tag wasi-demo-app --module ./target/wasm32-wasi/$(OPT_PROFILE)/wasi-demo-app.wasm -o target/wasm32-wasi/$(OPT_PROFILE)/img-oci.tar
+
+define build_img
+	@if ! test -f $1/build.rs; then \
+		echo "Setup build environment for" $1; \
+		cd $1; \
+		cp $(BUILD_SCRIPT_PATH) .; \
+		cargo add --build tar@0.4 sha256@=1.4.0 log@0.4 env_logger@0.10 oci-spec@0.6.4 anyhow@1.0; \
+		cargo add --build oci-tar-builder --git https://github.com/containerd/runwasi; \
+	fi
+	cd $1 && cargo build --target=wasm32-wasi $(RELEASE_FLAG)
+	cd $1 && BUILD_IMAGE=TRUE cargo build --target=wasm32-wasi $(RELEASE_FLAG)
+endef
+
+.PHONY: demo/%
+demo/%:
+	$(call build_img, $(patsubst %/target/wasm32-wasi/$(OPT_PROFILE)/img.tar,demo/%,$*))
+
+load_demo: $(HYPER_CLIENT_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(HYPER_SERVER_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(REQWEST_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(DB_MYSQL_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(DB_MYSQL_ASYNC_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(MICROSERVICE_DB_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(WASINN_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(PREOPENS_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(LLAMA2_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar \
+	$(LLAMA2_CHAT_PATH)/target/wasm32-wasi/$(OPT_PROFILE)/img.tar
+	$(foreach var,$^,\
+		sudo ctr -n $(CONTAINERD_NAMESPACE) image import --all-platforms $(var);\
+	)
 
 bin/kind: test/k8s/Dockerfile
 	$(DOCKER_BUILD) --output=bin/ -f test/k8s/Dockerfile --target=kind .
@@ -230,7 +271,7 @@ test/k8s/cluster-oci-%: dist/img-oci.tar bin/kind test/k8s/_out/img-oci-%
 test/k8s-%: test/k8s/clean test/k8s/cluster-%
 	kubectl --context=kind-$(KIND_CLUSTER_NAME) apply -f test/k8s/deploy.yaml
 	kubectl --context=kind-$(KIND_CLUSTER_NAME) wait deployment wasi-demo --for condition=Available=True --timeout=90s
-	# verify that we are still running after some time	
+	# verify that we are still running after some time
 	sleep 5s
 	kubectl --context=kind-$(KIND_CLUSTER_NAME) wait deployment wasi-demo --for condition=Available=True --timeout=5s
 
@@ -255,7 +296,7 @@ test/k3s-%: dist/img.tar bin/k3s dist-%
 	sudo bin/k3s kubectl apply -f test/k8s/deploy.yaml
 	sudo bin/k3s kubectl get pods --all-namespaces
 	sudo bin/k3s kubectl wait deployment wasi-demo --for condition=Available=True --timeout=120s
-	# verify that we are still running after some time	
+	# verify that we are still running after some time
 	sleep 5s
 	sudo bin/k3s kubectl wait deployment wasi-demo --for condition=Available=True --timeout=5s
 	sudo bin/k3s kubectl get pods -o wide

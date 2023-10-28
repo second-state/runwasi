@@ -41,4 +41,4 @@ jobs:
           ls -alh dist/bin
           make load
           sudo cp -f dist/bin/* /usr/local/bin
-          sudo ctr run --rm --runtime=io.containerd.${{ inputs.runtime }}.v1 ghcr.io/containerd/runwasi/wasi-demo-app:latest testwasm /wasi-demo-app.wasm echo 'hello'
+          sudo ctr run --rm --runtime=io.containerd.${{ inputs.runtime }}.v1 ghcr.io/second-state/runwasi-demo:wasi-demo-app testwasm /wasi-demo-app.wasm echo 'hello'

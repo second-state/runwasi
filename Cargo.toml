@@ -8,6 +8,7 @@ members = [
     "crates/containerd-shim-wasmtime",
     "crates/containerd-shim-wasmer"
 ]
+exclude = ["demo"]
 resolver = "2"
 
 [workspace.package]
