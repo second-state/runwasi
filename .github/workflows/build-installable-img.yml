@@ -97,7 +97,7 @@ jobs:
         uses: docker/bake-action@v4
         env:
           plugin: ${{ matrix.plugin }}
-          platforms: ${{ (matrix.plugin == 'wasi_nn-pytorch' || matrix.plugin == 'wasi_nn-ggml') && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          platforms: 'linux/amd64'
         with:
           files: |
             release/docker-bake.hcl
@@ -152,6 +152,8 @@ jobs:
 
       - name: Build and push
         uses: docker/bake-action@v4
+        env:
+          platforms: 'linux/amd64'
         with:
           files: |
             release/docker-bake.hcl
@@ -212,7 +214,7 @@ jobs:
         uses: docker/bake-action@v4
         env:
           plugin: ${{ matrix.plugin }}
-          platforms: ${{ (matrix.plugin == 'wasi_nn-pytorch' || matrix.plugin == 'wasi_nn-ggml') && 'linux/amd64' || 'linux/amd64,linux/arm64' }}
+          platforms: 'linux/amd64'
         with:
           files: |
             release/docker-bake.hcl
