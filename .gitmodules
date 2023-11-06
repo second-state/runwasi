@@ -21,4 +21,4 @@
 	url = https://github.com/second-state/wasmedge-rootfs-mounts-demo.git
 [submodule "demo/llama2"]
 	path = demo/llama2
-	url = https://github.com/second-state/llama-utils.git
+	url = https://github.com/CaptainVincent/llama-utils.git
