@@ -16,7 +16,7 @@ RUN <<EOT
     set -ex
     os=$(xx-info os)
     plugins=$( [ -n "$PLUGIN" ] && echo "--plugin $PLUGIN" || echo "" )
-    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --version=0.13.5 --platform=${os^} --machine=$(xx-info march) $plugins
+    curl -sSf https://raw.githubusercontent.com/WasmEdge/WasmEdge/master/utils/install.sh | bash -s -- --platform=${os^} --machine=$(xx-info march) $plugins
     mkdir -p /dynlib
     ./install_dependencies.sh $PLUGIN /dynlib
     for file in /root/.wasmedge/plugin/*.so; do

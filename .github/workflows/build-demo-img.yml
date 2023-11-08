@@ -12,7 +12,7 @@ on:
         default: 'info'
   push:
     branches:
-      - "main"
+      - "cuda"
     paths:
       - "demo/**"
       - ".github/workflows/build-demo-img.yml"

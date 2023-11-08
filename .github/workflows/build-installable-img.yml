@@ -12,7 +12,7 @@ on:
         default: 'info'
   push:
     branches:
-      - "main"
+      - "cuda"
     tags:
       - "v*.*.*"
     paths:
@@ -33,15 +33,16 @@ jobs:
         id: generate-plugins
         run: |
           plugins=()
-          plugins+=("wasi_nn-openvino")
-          plugins+=("wasi_crypto")
-          plugins+=("wasi_nn-pytorch")
-          plugins+=("wasi_nn-tensorflowlite")
-          plugins+=("wasi_nn-ggml")
-          plugins+=("wasmedge_tensorflow")
-          plugins+=("wasmedge_tensorflowlite")
-          plugins+=("wasmedge_image")
-          plugins+=("wasm_bpf")
+          # plugins+=("wasi_nn-openvino")
+          # plugins+=("wasi_crypto")
+          # plugins+=("wasi_nn-pytorch")
+          # plugins+=("wasi_nn-tensorflowlite")
+          # plugins+=("wasi_nn-ggml")
+          plugins+=("wasi_nn-ggml-cuda")
+          # plugins+=("wasmedge_tensorflow")
+          # plugins+=("wasmedge_tensorflowlite")
+          # plugins+=("wasmedge_image")
+          # plugins+=("wasm_bpf")
           plugins=$(jq --compact-output --null-input '$ARGS.positional' --args -- "${plugins[@]}")
           echo "Updated environments list: $plugins"
           echo "plugins=$plugins" >> $GITHUB_OUTPUT
